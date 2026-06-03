@@ -8,6 +8,7 @@ import Feed from './components/Feed'
 import MyPosts from './components/MyPosts'
 import UsersPage from './components/UsersPage'
 import NewPostModal from './components/NewPostModal'
+import NotificationsPanel from './components/NotificationsPanel'
 
 type Page = 'feed' | 'mine' | 'users'
 
@@ -41,6 +42,7 @@ export default function App() {
           </button>
           {user && (
             <>
+              <NotificationsPanel />
               <button
                 onClick={() => setPage('mine')}
                 className={`text-sm transition-colors ${page === 'mine' ? 'text-white' : 'text-neutral-400 hover:text-white'}`}

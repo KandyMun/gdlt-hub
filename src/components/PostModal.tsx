@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import LikeBar from './LikeBar'
 import {
   collection, query, orderBy, onSnapshot,
@@ -19,15 +19,17 @@ interface Comment {
 interface Props {
   post: Post
   onClose: () => void
+  scrollToComments?: boolean
 }
 
 const MAX = 160
 
-export default function PostModal({ post: initialPost, onClose }: Props) {
+export default function PostModal({ post: initialPost, onClose, scrollToComments }: Props) {
   const { user } = useAuth()
   const [post, setPost] = useState<Post>(initialPost)
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
+  const commentsRef = useRef<HTMLDivElement>(null)
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -48,6 +50,12 @@ export default function PostModal({ post: initialPost, onClose }: Props) {
     })
   }, [initialPost.id])
 
+  useEffect(() => {
+    if (scrollToComments && commentsRef.current) {
+      setTimeout(() => commentsRef.current?.scrollIntoView({ behavior: 'smooth' }), 300)
+    }
+  }, [scrollToComments])
+
   async function submitComment() {
     if (!text.trim() || !user) return
     setSubmitting(true)
@@ -58,6 +66,17 @@ export default function PostModal({ post: initialPost, onClose }: Props) {
       createdAt: Date.now(),
     })
     await updateDoc(doc(db, 'posts', post.id), { commentCount: increment(1) })
+    if (user.uid !== post.authorId) {
+      await addDoc(collection(db, 'notifications'), {
+        userId: post.authorId,
+        postId: post.id,
+        postTitle: post.title,
+        commenterUsername: user.email.replace('@freepost.local', ''),
+        commentPreview: text.trim().slice(0, 80),
+        createdAt: Date.now(),
+        read: false,
+      })
+    }
     setText('')
     setSubmitting(false)
   }
@@ -107,7 +126,7 @@ export default function PostModal({ post: initialPost, onClose }: Props) {
           </div>
 
         {/* Comments */}
-        <div className="px-4 py-3 flex flex-col gap-3">
+        <div ref={commentsRef} className="px-4 py-3 flex flex-col gap-3">
           {comments.length === 0 && (
             <p className="text-neutral-600 text-sm text-center py-4">No comments yet.</p>
           )}

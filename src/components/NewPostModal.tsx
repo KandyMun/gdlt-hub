@@ -4,7 +4,7 @@ import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { storage, db } from '../firebase'
 import { useAuth } from '../AuthContext'
 
-const COOLDOWN_MS = 2 * 60 * 1000
+const COOLDOWN_MS = 1.5 * 60 * 1000
 
 interface Props {
   onClose: () => void
