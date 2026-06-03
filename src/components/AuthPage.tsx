@@ -6,7 +6,11 @@ import {
 import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
-export default function AuthPage() {
+interface Props {
+  onSuccess?: () => void
+}
+
+export default function AuthPage({ onSuccess }: Props) {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -21,6 +25,7 @@ export default function AuthPage() {
     try {
       if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password)
+        onSuccess?.()
       } else {
         const { user } = await createUserWithEmailAndPassword(auth, email, password)
         await setDoc(doc(db, 'users', user.uid), {
@@ -28,6 +33,7 @@ export default function AuthPage() {
           createdAt: Date.now(),
           banned: false,
         })
+        onSuccess?.()
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -63,7 +69,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition-colors"
+            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition-colors"
           >
             {loading ? 'Loading…' : mode === 'login' ? 'Sign in' : 'Sign up'}
           </button>

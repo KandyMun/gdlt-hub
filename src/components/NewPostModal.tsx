@@ -9,40 +9,58 @@ interface Props {
   onPosted: () => void
 }
 
+const MAX_SIZE = 15 * 1024 * 1024
+
 export default function NewPostModal({ onClose, onPosted }: Props) {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [isVideo, setIsVideo] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-
-    if (f.size > 10 * 1024 * 1024) {
-      setError('Image must be 10MB or smaller.')
-      e.target.value = ''
+  function processFile(f: File) {
+    if (f.size > MAX_SIZE) {
+      setError('File must be 15MB or smaller.')
       return
     }
-
     const url = URL.createObjectURL(f)
+    if (f.type.startsWith('video/')) {
+      setError('')
+      setFile(f)
+      setPreview(url)
+      setIsVideo(true)
+      return
+    }
     const img = new Image()
     img.onload = () => {
       if (img.width > 5000 || img.height > 5000) {
         setError('Image must be 5000×5000 pixels or smaller.')
         URL.revokeObjectURL(url)
-        e.target.value = ''
         return
       }
       setError('')
       setFile(f)
       setPreview(url)
+      setIsVideo(false)
     }
     img.src = url
+  }
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (f) processFile(f)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    const f = e.dataTransfer.files?.[0]
+    if (f) processFile(f)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,6 +78,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
         description,
         imageUrl,
         storagePath,
+        isVideo,
         authorId: user.uid,
         authorEmail: user.email,
         createdAt: Date.now(),
@@ -83,15 +102,22 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
           <div
             onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-neutral-700 hover:border-violet-500 rounded-xl cursor-pointer flex items-center justify-center h-48 overflow-hidden transition-colors"
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            className={`border-2 border-dashed rounded-xl cursor-pointer flex items-center justify-center h-48 overflow-hidden transition-colors ${dragging ? 'border-violet-400 bg-violet-950/30' : 'border-neutral-700 hover:border-violet-500'}`}
           >
             {preview ? (
-              <img src={preview} alt="preview" className="h-full w-full object-cover rounded-xl" />
+              isVideo ? (
+                <video src={preview} className="h-full w-full object-cover rounded-xl" muted />
+              ) : (
+                <img src={preview} alt="preview" className="h-full w-full object-cover rounded-xl" />
+              )
             ) : (
-              <span className="text-neutral-500 text-sm">Click to choose an image</span>
+              <span className="text-neutral-500 text-sm">Click to choose an image or video</span>
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} className="hidden" />
           <input
             type="text"
             placeholder="Title"

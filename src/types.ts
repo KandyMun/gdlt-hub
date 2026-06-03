@@ -7,4 +7,7 @@ export interface Post {
   authorId: string
   authorEmail: string
   createdAt: number
+  isVideo?: boolean
+  likedBy: string[]
+  dislikedBy: string[]
 }

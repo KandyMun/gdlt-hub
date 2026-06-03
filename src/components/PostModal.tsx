@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LikeBar from './LikeBar'
 import {
   collection, query, orderBy, onSnapshot,
   addDoc, doc, updateDoc,
@@ -22,8 +23,9 @@ interface Props {
 
 const MAX = 160
 
-export default function PostModal({ post, onClose }: Props) {
+export default function PostModal({ post: initialPost, onClose }: Props) {
   const { user } = useAuth()
+  const [post, setPost] = useState<Post>(initialPost)
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -31,14 +33,20 @@ export default function PostModal({ post, onClose }: Props) {
   const [editText, setEditText] = useState('')
 
   useEffect(() => {
+    return onSnapshot(doc(db, 'posts', initialPost.id), (snap) => {
+      if (snap.exists()) setPost({ id: snap.id, ...snap.data() } as Post)
+    })
+  }, [initialPost.id])
+
+  useEffect(() => {
     const q = query(
-      collection(db, 'posts', post.id, 'comments'),
+      collection(db, 'posts', initialPost.id, 'comments'),
       orderBy('createdAt', 'asc'),
     )
     return onSnapshot(q, (snap) => {
       setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Comment)))
     })
-  }, [post.id])
+  }, [initialPost.id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -79,16 +87,22 @@ export default function PostModal({ post, onClose }: Props) {
           <button onClick={onClose} className="text-neutral-400 hover:text-white text-xl leading-none shrink-0">✕</button>
         </div>
 
-        {/* Post details */}
-        <div className="shrink-0">
-          <img src={post.imageUrl} alt={post.title} className="w-full max-h-56 object-cover" />
-          {post.description && (
-            <p className="text-neutral-400 text-sm px-4 py-3 border-b border-neutral-800">{post.description}</p>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto">
+          {post.isVideo ? (
+            <video src={post.imageUrl} className="w-full" controls autoPlay loop playsInline />
+          ) : (
+            <img src={post.imageUrl} alt={post.title} className="w-full object-contain" />
           )}
-        </div>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
+            {post.description
+              ? <p className="text-neutral-400 text-sm whitespace-pre-wrap">{post.description}</p>
+              : <span />}
+            <LikeBar post={post} />
+          </div>
 
         {/* Comments */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+        <div className="px-4 py-3 flex flex-col gap-3">
           {comments.length === 0 && (
             <p className="text-neutral-600 text-sm text-center py-4">No comments yet.</p>
           )}
@@ -146,6 +160,7 @@ export default function PostModal({ post, onClose }: Props) {
               )}
             </div>
           ))}
+        </div>
         </div>
 
         {/* Comment input */}
