@@ -8,6 +8,7 @@ export interface Post {
   authorEmail: string
   createdAt: number
   isVideo?: boolean
+  commentCount?: number
   likedBy: string[]
   dislikedBy: string[]
 }

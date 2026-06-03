@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import LikeBar from './LikeBar'
 import {
   collection, query, orderBy, onSnapshot,
-  addDoc, doc, updateDoc,
+  addDoc, doc, updateDoc, increment,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../AuthContext'
@@ -58,6 +58,7 @@ export default function PostModal({ post: initialPost, onClose }: Props) {
       authorEmail: user.email,
       createdAt: Date.now(),
     })
+    await updateDoc(doc(db, 'posts', post.id), { commentCount: increment(1) })
     setText('')
     setSubmitting(false)
   }
@@ -169,6 +170,7 @@ export default function PostModal({ post: initialPost, onClose }: Props) {
             placeholder="Write a comment…"
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX))}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e) } }}
             rows={2}
             className="bg-neutral-800 text-white text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-600 resize-none"
           />

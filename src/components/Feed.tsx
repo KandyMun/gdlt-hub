@@ -96,17 +96,25 @@ export default function Feed({ onPostModalChange }: Props) {
           className="break-inside-avoid mb-4 bg-neutral-900 rounded-2xl overflow-hidden shadow-lg cursor-pointer"
           onClick={() => openPost(post)}
         >
-          {post.isVideo ? (
-            <video src={post.imageUrl} className="w-full object-cover" muted loop autoPlay playsInline />
-          ) : (
-            <img src={post.imageUrl} alt={post.title} className="w-full object-cover" loading="lazy" />
-          )}
+          <div className="relative">
+            {post.isVideo ? (
+              <video src={post.imageUrl} className="w-full object-cover" muted loop autoPlay playsInline />
+            ) : (
+              <img src={post.imageUrl} alt={post.title} className="w-full object-cover" loading="lazy" />
+            )}
+            {post.isVideo && (
+              <span className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">▶ video</span>
+            )}
+          </div>
           <div className="p-4">
+            <p className="text-neutral-500 text-xs mb-1">{post.authorEmail.replace('@freepost.local', '')}</p>
             <h3 className="text-white font-semibold text-base">{post.title}</h3>
             {post.description && <p className="text-neutral-400 text-sm mt-1">{post.description}</p>}
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-3 mt-3">
               <LikeBar post={post} />
-              <p className="text-neutral-600 text-xs">{post.authorEmail.replace('@freepost.local', '')}</p>
+              <span className="text-neutral-500 text-sm">💬 {post.commentCount ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-end mt-1">
               {isAdmin && (
                 confirmId === post.id ? (
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
