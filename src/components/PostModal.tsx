@@ -62,7 +62,7 @@ export default function PostModal({ post: initialPost, onClose, scrollToComments
     await addDoc(collection(db, 'posts', post.id, 'comments'), {
       text: text.trim(),
       authorId: user.uid,
-      authorEmail: user.email,
+      authorEmail: user.email ?? '',
       createdAt: Date.now(),
     })
     await updateDoc(doc(db, 'posts', post.id), { commentCount: increment(1) })
@@ -71,7 +71,7 @@ export default function PostModal({ post: initialPost, onClose, scrollToComments
         userId: post.authorId,
         postId: post.id,
         postTitle: post.title,
-        commenterUsername: user.email.replace('@freepost.local', ''),
+        commenterUsername: (user.email ?? '').replace('@freepost.local', ''),
         commentPreview: text.trim().slice(0, 80),
         createdAt: Date.now(),
         read: false,

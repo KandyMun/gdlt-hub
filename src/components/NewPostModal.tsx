@@ -100,7 +100,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
         isVideo,
         commentCount: 0,
         authorId: user.uid,
-        authorEmail: user.email,
+        authorEmail: user.email ?? '',
         createdAt: Date.now(),
       })
       await updateDoc(doc(db, 'users', user.uid), { lastPostAt: Date.now() })
