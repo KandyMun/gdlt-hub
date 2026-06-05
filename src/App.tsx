@@ -16,6 +16,7 @@ import NewPostModal from './components/NewPostModal'
 import NotificationsPanel from './components/NotificationsPanel'
 import ChangelogPage from './components/ChangelogPage'
 import VERSION from './version'
+import Spinner from './components/Spinner'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -30,7 +31,7 @@ export default function App() {
   const [feedKey, setFeedKey] = useState(0)
 
   if (loading) {
-    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center"><img src="/freepost/loadingWheel.png" alt="loading" className="w-16 h-16 animate-spin" /></div>
+    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center"><Spinner /></div>
   }
 
   if (showAuth && !user) {
@@ -57,17 +58,27 @@ export default function App() {
         <div className="flex items-center gap-3">
           {user && (
             <div className="flex items-center gap-2">
-              <NotificationsPanel onOpenPost={(post) => setNotifPost(post)} />
-              <span className="text-sm text-neutral-400">{user.email?.split('@')[0]}</span>
+              <span className="text-sm text-neutral-400">
+                {t.nav_logged_in_as(user.email?.split('@')[0] ?? '')}
+              </span>
               {isAdmin && <span title="Admin" className="text-yellow-400 text-sm">★</span>}
             </div>
           )}
-          <button
-            onClick={() => setLocale(locale === 'lt' ? 'en' : 'lt')}
-            className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors border border-neutral-700 hover:border-neutral-500 rounded px-1.5 py-0.5"
-          >
-            {locale === 'lt' ? '🇬🇧 EN' : '🇱🇹 LT'}
-          </button>
+          <div className="flex items-center border border-neutral-700 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setLocale('lt')}
+              className={`px-3 py-1.5 text-sm transition-colors ${locale === 'lt' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+            >
+              🇱🇹 LT
+            </button>
+            <button
+              onClick={() => setLocale('en')}
+              className={`px-3 py-1.5 text-sm transition-colors ${locale === 'en' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+            >
+              🇬🇧 EN
+            </button>
+          </div>
+          {user && <NotificationsPanel onOpenPost={(post) => setNotifPost(post)} />}
           {user ? (
             <button
               onClick={() => signOut(auth)}

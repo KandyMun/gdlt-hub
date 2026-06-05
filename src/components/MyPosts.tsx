@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { type Post } from '../types'
 import EditPostModal from './EditPostModal'
+import Spinner from './Spinner'
 
 export default function MyPosts() {
   const { user } = useAuth()
@@ -26,7 +27,7 @@ export default function MyPosts() {
     })
   }, [user])
 
-  if (loading) return <div className="flex justify-center py-20"><img src="/freepost/loadingWheel.png" alt="loading" className="w-16 h-16 animate-spin" /></div>
+  if (loading) return <div className="flex justify-center py-20"><Spinner /></div>
   if (posts.length === 0) return <div className="text-neutral-500 text-center py-20">{t.myposts_empty}</div>
 
   return (

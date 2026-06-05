@@ -7,9 +7,10 @@ import { type Post } from '../types'
 interface Props {
   post: Post
   frozen?: boolean
+  size?: 'sm' | 'lg'
 }
 
-export default function LikeBar({ post, frozen }: Props) {
+export default function LikeBar({ post, frozen, size = 'sm' }: Props) {
   const { user } = useAuth()
   const [liked, setLiked] = useState(user ? (post.likedBy?.includes(user.uid) ?? false) : false)
   const [disliked, setDisliked] = useState(user ? (post.dislikedBy?.includes(user.uid) ?? false) : false)
@@ -56,18 +57,22 @@ export default function LikeBar({ post, frozen }: Props) {
     }
   }
 
+  const base = size === 'lg'
+    ? 'flex items-center gap-2 text-lg px-3 py-1.5 rounded-lg transition-colors cursor-pointer'
+    : 'flex items-center gap-1 text-sm transition-colors cursor-pointer'
+
   return (
     <div className="flex items-center gap-3">
       <button
         onClick={handleLike}
-        className={`flex items-center gap-1 text-sm transition-colors ${liked ? 'text-violet-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+        className={`${base} ${liked ? 'text-violet-400' : 'text-neutral-500 hover:text-neutral-300'}`}
       >
         <span>▲</span>
         <span>{likeCount}</span>
       </button>
       <button
         onClick={handleDislike}
-        className={`flex items-center gap-1 text-sm transition-colors ${disliked ? 'text-red-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+        className={`${base} ${disliked ? 'text-red-400' : 'text-neutral-500 hover:text-neutral-300'}`}
       >
         <span>▼</span>
         <span>{dislikeCount}</span>

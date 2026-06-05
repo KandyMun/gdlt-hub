@@ -1,9 +1,23 @@
 # Changelog
 
+## [v0.1.1] - 2026-06-06
+
+### Pakeista
+- Sunatūrintas įrašo kėlimo mygtukas, prieš tai jis skambėjo šiek tiek keistai ir nepraktiškai.
+- Pakeistas puslapio logotipas ir pavadinimas naršyklės skiltyje (wtf is tmp-scaffold bruh).
+- Patinka/Nepatinka mygtukai paspaudus ant įrašo yra didesni, nebėra sulieti su aprašu.
+
+### Pataisyta
+- Pele užvedus ant Patinka/Nepatinka mygtukų, žymeklis netampa paprastu, išlieka pirštu.
+- Tvarkingiau rodomas laukas, kuriame parodo kuria paskyra yra prisijungta.
+
+### Pridėta
+- Rodomas komentarų skaičius įrašo lange.
+
 ## [v0.1.0.3] - 2026-06-06
 
 ### Pridėta
-Krovimo indikacijos tekstas pakeistas į besisukantį Lietuvos spalvų Electrodynamix ikoną, LTCL mentioned
+- Krovimo indikacijos tekstas pakeistas į besisukantį Lietuvos spalvų Electrodynamix ikoną, LTCL mentioned
 
 ## [v0.1.0.2] - 2026-06-06
 
@@ -29,5 +43,5 @@ Krovimo indikacijos tekstas pakeistas į besisukantį Lietuvos spalvų Electrody
 - Galima paminėti kitus naudotojus komentaruose, jiems išsiunčiant pranešimą.
 
 ### Sisteminiai pokyčiai
-- Susidorota su S3ni (tikiuosi, jei prisikels praneškit, ačiū).
+- Susidorota su S3NI (tikiuosi, jei prisikels praneškit, ačiū).
 

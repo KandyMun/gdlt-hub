@@ -10,6 +10,7 @@ import { useIsAdmin } from '../useIsAdmin'
 import { useI18n } from '../i18n'
 import PostModal from './PostModal'
 import LikeBar from './LikeBar'
+import Spinner from './Spinner'
 
 const PAGE_SIZE = 15
 
@@ -220,7 +221,7 @@ export default function Feed({ onPostModalChange, frozen }: Props) {
     : posts
   ).filter((p) => !pinnedIds.has(p.id))
 
-  if (loading) return <div className="flex justify-center py-20"><img src="/freepost/loadingWheel.png" alt="loading" className="w-16 h-16 animate-spin" /></div>
+  if (loading) return <div className="flex justify-center py-20"><Spinner /></div>
   if (posts.length === 0 && pinnedPosts.length === 0) return <div className="text-neutral-500 text-center py-20">{t.feed_empty}</div>
 
   return (

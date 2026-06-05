@@ -6,6 +6,7 @@ const lt = {
   nav_users: 'Vartotojai',
   nav_signin: 'Prisijungti',
   nav_signout: 'Atsijungti',
+  nav_logged_in_as: (u: string) => `Prisijungta kaip: ${u}`,
 
   // Site status
   site_frozen_banner: 'Svetainė šiuo metu užšaldyta. Įrašymas ir sąveikos išjungtos.',
@@ -33,6 +34,11 @@ const lt = {
 
   // Post modal
   post_no_comments: 'Komentarų dar nėra.',
+  post_comment_count: (n: number) => {
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} komentaras`
+    if (n % 10 >= 2 && n % 10 <= 9 && (n % 100 < 10 || n % 100 >= 20)) return `${n} komentarai`
+    return `${n} komentarų`
+  },
   post_comment_delete: 'Ištrinti',
   post_frozen_comments: 'Svetainė užšaldyta. Komentarai išjungti.',
   post_comment_placeholder: 'Parašykite komentarą…',
@@ -46,7 +52,7 @@ const lt = {
   new_post_desc_placeholder: 'Aprašymas (neprivaloma)',
   new_post_uploading: 'Įkeliama…',
   new_post_cooldown: (s: number) => `Palaukite ${s}s`,
-  new_post_submit: 'Paskelbti',
+  new_post_submit: 'Kurti naują įrašą',
   new_post_err_size: 'Failas turi būti ne didesnis nei 15MB.',
   new_post_err_dimensions: 'Paveikslėlis turi būti ne didesnis nei 5000×5000 pikselių.',
   new_post_err_upload: 'Įkėlimas nepavyko',

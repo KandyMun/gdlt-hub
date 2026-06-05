@@ -6,6 +6,7 @@ const en = {
   nav_users: 'Users',
   nav_signin: 'Sign in',
   nav_signout: 'Sign out',
+  nav_logged_in_as: (u: string) => `Logged in as: ${u}`,
 
   // Site status
   site_frozen_banner: 'The site is currently frozen. Posting and interactions are disabled.',
@@ -33,6 +34,7 @@ const en = {
 
   // Post modal
   post_no_comments: 'No comments yet.',
+  post_comment_count: (n: number) => `${n} ${n === 1 ? 'comment' : 'comments'}`,
   post_comment_delete: 'Delete',
   post_frozen_comments: 'The site is frozen. Comments are disabled.',
   post_comment_placeholder: 'Write a comment…',
@@ -46,7 +48,7 @@ const en = {
   new_post_desc_placeholder: 'Description (optional)',
   new_post_uploading: 'Uploading…',
   new_post_cooldown: (s: number) => `Wait ${s}s`,
-  new_post_submit: 'Post',
+  new_post_submit: 'Create post',
   new_post_err_size: 'File must be 15MB or smaller.',
   new_post_err_dimensions: 'Image must be 5000×5000 pixels or smaller.',
   new_post_err_upload: 'Upload failed',

@@ -154,14 +154,15 @@ export default function PostModal({ post: initialPost, onClose, scrollToComments
           ) : (
             <img src={post.imageUrl} alt={post.title} className="w-full object-contain" />
           )}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-            {post.description
-              ? <p className="text-neutral-400 text-sm whitespace-pre-wrap">{post.description}</p>
-              : <span />}
-            <LikeBar post={post} frozen={frozen} />
+          <div className="px-4 py-3 border-b border-neutral-800 flex flex-col gap-2">
+            {post.description && (
+              <p className="text-neutral-400 text-sm whitespace-pre-wrap">{post.description}</p>
+            )}
+            <LikeBar post={post} frozen={frozen} size="lg" />
           </div>
 
-          <div ref={commentsRef} className="px-4 py-3 flex flex-col gap-3">
+          <div ref={commentsRef} className="px-4 pt-3 flex flex-col gap-3">
+            <p className="text-neutral-500 text-base font-medium">💬 {t.post_comment_count(post.commentCount ?? 0)}</p>
             {comments.length === 0 && (
               <p className="text-neutral-600 text-sm text-center py-4">{t.post_no_comments}</p>
             )}
