@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.0.2] - 2026-06-06
+
+### Fixed
+- Pašalinti du pertekliniai lokalės raktai, pataisytas nenatūralus lietuviškas pranešimo tekstas
+
 ## [v0.1.0.1] - 2026-06-05
 
 ### Pataisymai

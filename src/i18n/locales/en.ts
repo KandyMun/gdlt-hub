@@ -27,7 +27,6 @@ const en = {
   feed_video_badge: '▶ video',
   feed_loading_more: 'Loading…',
   feed_no_more: 'No more posts',
-  feed_delete_confirm: 'Cancel',
   feed_pin: 'Pin',
   feed_unpin: 'Unpin',
   feed_new_available: '↑ New posts available — click to refresh',
@@ -79,7 +78,6 @@ const en = {
   myposts_empty: "You haven't posted anything yet.",
 
   // Users page
-  users_loading: 'Loading…',
   users_site_frozen: 'Site is frozen',
   users_site_active: 'Site is active',
   users_frozen_desc: 'Non-admin users cannot interact with the site.',
@@ -104,6 +102,6 @@ const en = {
   // Changelog
   changelog_title: 'Changelog',
   changelog_current: (v: string) => `current: ${v}`,
-} as const
+}
 
 export default en

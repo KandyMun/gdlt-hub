@@ -27,7 +27,6 @@ const lt = {
   feed_video_badge: '▶ video',
   feed_loading_more: 'Kraunama…',
   feed_no_more: 'Daugiau įrašų nėra',
-  feed_delete_confirm: 'Atšaukti',
   feed_pin: 'Prisegti',
   feed_unpin: 'Atsegti',
   feed_new_available: '↑ Nauji įrašai — spustelėkite norėdami atnaujinti',
@@ -79,7 +78,6 @@ const lt = {
   myposts_empty: 'Dar nieko nepaskelbėte.',
 
   // Users page
-  users_loading: 'Kraunama…',
   users_site_frozen: 'Svetainė užšaldyta',
   users_site_active: 'Svetainė aktyvi',
   users_frozen_desc: 'Neadministratoriai negali sąveikauti su svetaine.',
@@ -98,12 +96,12 @@ const lt = {
   notif_mark_read: 'Pažymėti visus skaitytais',
   notif_clear: 'Išvalyti viską',
   notif_empty: 'Pranešimų dar nėra.',
-  notif_commented_on: ' pakomentavo ant ',
+  notif_commented_on: ' pakomentavo įraše ',
   notif_mentioned_in: ' paminėjo jus įraše ',
 
   // Changelog
   changelog_title: 'Atnaujinimai',
   changelog_current: (v: string) => `dabartinė: ${v}`,
-} as const
+}
 
 export default lt
