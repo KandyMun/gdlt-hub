@@ -35,6 +35,14 @@ const GROUP_COLORS: Record<string, string> = {
   Fixed: 'text-yellow-400',
   Removed: 'text-red-400',
   Security: 'text-violet-400',
+  // Lithuanian
+  Pridėta: 'text-emerald-400',
+  Pakeista: 'text-blue-400',
+  Pataisyta: 'text-yellow-400',
+  Pašalinta: 'text-red-400',
+  Saugumas: 'text-violet-400',
+  Pataisymai: 'text-yellow-400',
+  Pakeitimai: 'text-blue-400',
 }
 
 export default function ChangelogPage() {

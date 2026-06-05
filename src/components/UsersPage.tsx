@@ -34,7 +34,7 @@ export default function UsersPage() {
     await updateDoc(doc(db, 'users', u.id), { banned: !u.banned })
   }
 
-  if (loading) return <div className="text-neutral-500 text-center py-20">{t.loading}</div>
+  if (loading) return <div className="flex justify-center py-20"><img src="/freepost/loadingWheel.png" alt="loading" className="w-16 h-16 animate-spin" /></div>
 
   return (
     <div className="p-4 flex flex-col gap-3 max-w-2xl mx-auto">

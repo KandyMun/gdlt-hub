@@ -30,7 +30,7 @@ export default function App() {
   const [feedKey, setFeedKey] = useState(0)
 
   if (loading) {
-    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-neutral-500">{t.loading}</div>
+    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center"><img src="/freepost/loadingWheel.png" alt="loading" className="w-16 h-16 animate-spin" /></div>
   }
 
   if (showAuth && !user) {
