@@ -5,12 +5,14 @@ import {
 } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase'
+import { useI18n } from '../i18n'
 
 interface Props {
   onSuccess?: () => void
 }
 
 export default function AuthPage({ onSuccess }: Props) {
+  const { t } = useI18n()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -36,7 +38,7 @@ export default function AuthPage({ onSuccess }: Props) {
         onSuccess?.()
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setError(err instanceof Error ? err.message : t.auth_err_generic)
     } finally {
       setLoading(false)
     }
@@ -46,12 +48,12 @@ export default function AuthPage({ onSuccess }: Props) {
     <div className="min-h-screen flex items-center justify-center bg-neutral-950">
       <div className="w-full max-w-sm bg-neutral-900 rounded-2xl p-8 shadow-xl">
         <h1 className="text-2xl font-semibold text-white mb-6 text-center">
-          {mode === 'login' ? 'Sign in' : 'Create account'}
+          {mode === 'login' ? t.auth_signin_title : t.auth_signup_title}
         </h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Username"
+            placeholder={t.auth_username_placeholder}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -59,7 +61,7 @@ export default function AuthPage({ onSuccess }: Props) {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t.auth_password_placeholder}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -71,16 +73,16 @@ export default function AuthPage({ onSuccess }: Props) {
             disabled={loading}
             className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition-colors"
           >
-            {loading ? 'Loading…' : mode === 'login' ? 'Sign in' : 'Sign up'}
+            {loading ? t.auth_loading : mode === 'login' ? t.auth_signin_button : t.auth_signup_button}
           </button>
         </form>
         <p className="text-neutral-500 text-sm text-center mt-4">
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+          {mode === 'login' ? t.auth_no_account : t.auth_has_account}
           <button
             onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
             className="text-violet-400 hover:text-violet-300"
           >
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
+            {mode === 'login' ? t.auth_go_signup : t.auth_go_signin}
           </button>
         </p>
       </div>

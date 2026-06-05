@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 import { type Post } from '../types'
 import EditPostModal from './EditPostModal'
 
 export default function MyPosts() {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Post | null>(null)
@@ -24,8 +26,8 @@ export default function MyPosts() {
     })
   }, [user])
 
-  if (loading) return <div className="text-neutral-500 text-center py-20">Loading…</div>
-  if (posts.length === 0) return <div className="text-neutral-500 text-center py-20">You haven't posted anything yet.</div>
+  if (loading) return <div className="text-neutral-500 text-center py-20">{t.loading}</div>
+  if (posts.length === 0) return <div className="text-neutral-500 text-center py-20">{t.myposts_empty}</div>
 
   return (
     <div className="p-4 flex flex-col gap-4 max-w-2xl mx-auto">
@@ -41,7 +43,7 @@ export default function MyPosts() {
             onClick={() => setEditing(post)}
             className="shrink-0 text-neutral-400 hover:text-white text-sm border border-neutral-700 hover:border-neutral-500 rounded-lg px-3 py-1.5 transition-colors"
           >
-            Edit
+            {t.edit}
           </button>
         </div>
       ))}

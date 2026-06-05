@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 import { type Post } from '../types'
 
 interface Notification {
   id: string
+  type?: 'comment' | 'mention'
   postId: string
   postTitle: string
   commenterUsername: string
@@ -20,6 +22,7 @@ interface Props {
 
 export default function NotificationsPanel({ onOpenPost }: Props) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -50,7 +53,8 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
 
   async function handleNotifClick(notif: Notification) {
     if (!notif.read) {
-      await updateDoc(doc(db, 'notifications', notif.id), { read: true })
+      setNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n))
+      updateDoc(doc(db, 'notifications', notif.id), { read: true })
     }
     const snap = await getDoc(doc(db, 'posts', notif.postId))
     if (snap.exists()) {
@@ -67,7 +71,7 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
         onClick={() => setOpen((o) => !o)}
         className={`relative text-sm transition-colors ${open ? 'text-white' : 'text-neutral-400 hover:text-white'}`}
       >
-        Notifications
+        {t.notif_button}
         {unread > 0 && (
           <span className="absolute -top-1.5 -right-1.5 bg-violet-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
@@ -78,7 +82,7 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
       {open && (
         <div className="absolute right-0 top-8 w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-            <span className="text-white font-semibold text-sm">Notifications</span>
+            <span className="text-white font-semibold text-sm">{t.notif_panel_title}</span>
             <div className="flex items-center gap-3">
               {unread > 0 && (
                 <button
@@ -89,7 +93,7 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
                   }}
                   className="text-neutral-500 hover:text-white text-xs transition-colors"
                 >
-                  Mark all read
+                  {t.notif_mark_read}
                 </button>
               )}
               {notifs.length > 0 && (
@@ -101,14 +105,14 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
                   }}
                   className="text-neutral-500 hover:text-red-400 text-xs transition-colors"
                 >
-                  Clear all
+                  {t.notif_clear}
                 </button>
               )}
             </div>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifs.length === 0 ? (
-              <p className="text-neutral-500 text-sm text-center py-6">No notifications yet.</p>
+              <p className="text-neutral-500 text-sm text-center py-6">{t.notif_empty}</p>
             ) : (
               notifs.map((n) => (
                 <div
@@ -121,7 +125,7 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
                   >
                     <p className="text-white text-xs font-medium truncate">
                       <span className="text-violet-400">{n.commenterUsername}</span>
-                      {' commented on '}
+                      {n.type === 'mention' ? t.notif_mentioned_in : t.notif_commented_on}
                       <span className="text-neutral-300">{n.postTitle}</span>
                     </p>
                     <p className="text-neutral-500 text-xs mt-0.5 truncate">"{n.commentPreview}"</p>
@@ -140,7 +144,6 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
           </div>
         </div>
       )}
-
     </div>
   )
 }

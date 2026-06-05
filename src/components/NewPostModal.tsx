@@ -3,6 +3,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { storage, db } from '../firebase'
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 
 const COOLDOWN_MS = 1.5 * 60 * 1000
 
@@ -15,6 +16,7 @@ const MAX_SIZE = 15 * 1024 * 1024
 
 export default function NewPostModal({ onClose, onPosted }: Props) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -37,13 +39,13 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
 
   useEffect(() => {
     if (cooldownLeft <= 0) return
-    const t = setTimeout(() => setCooldownLeft((s) => s - 1), 1000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setCooldownLeft((s) => s - 1), 1000)
+    return () => clearTimeout(timer)
   }, [cooldownLeft])
 
   function processFile(f: File) {
     if (f.size > MAX_SIZE) {
-      setError('File must be 15MB or smaller.')
+      setError(t.new_post_err_size)
       return
     }
     const url = URL.createObjectURL(f)
@@ -57,7 +59,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
     const img = new Image()
     img.onload = () => {
       if (img.width > 5000 || img.height > 5000) {
-        setError('Image must be 5000×5000 pixels or smaller.')
+        setError(t.new_post_err_dimensions)
         URL.revokeObjectURL(url)
         return
       }
@@ -108,7 +110,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
       onPosted()
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      setError(err instanceof Error ? err.message : t.new_post_err_upload)
     } finally {
       setLoading(false)
     }
@@ -118,7 +120,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-neutral-900 rounded-2xl w-full max-w-lg shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-neutral-800">
-          <h2 className="text-lg font-semibold text-white">New post</h2>
+          <h2 className="text-lg font-semibold text-white">{t.new_post_title}</h2>
           <button onClick={onClose} className="text-neutral-400 hover:text-white text-xl leading-none">✕</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
@@ -136,20 +138,20 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
                 <img src={preview} alt="preview" className="h-full w-full object-cover rounded-xl" />
               )
             ) : (
-              <span className="text-neutral-500 text-sm">Click to choose an image or video</span>
+              <span className="text-neutral-500 text-sm">{t.new_post_drop_hint}</span>
             )}
           </div>
           <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} className="hidden" />
           <input
             type="text"
-            placeholder="Title"
+            placeholder={t.new_post_title_placeholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
             className="bg-neutral-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-500"
           />
           <textarea
-            placeholder="Description (optional)"
+            placeholder={t.new_post_desc_placeholder}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
@@ -161,7 +163,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
             disabled={loading || !file || !title || cooldownLeft > 0}
             className="bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium rounded-lg py-2.5 transition-colors"
           >
-            {loading ? 'Uploading…' : cooldownLeft > 0 ? `Wait ${cooldownLeft}s` : 'Post'}
+            {loading ? t.new_post_uploading : cooldownLeft > 0 ? t.new_post_cooldown(cooldownLeft) : t.new_post_submit}
           </button>
         </form>
       </div>

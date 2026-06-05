@@ -12,4 +12,5 @@ export interface Post {
   commentCount?: number
   likedBy: string[]
   dislikedBy: string[]
+  pinned?: boolean
 }

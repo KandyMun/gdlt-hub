@@ -3,6 +3,7 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { ref, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
 import { type Post } from '../types'
+import { useI18n } from '../i18n'
 
 interface Props {
   post: Post
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function EditPostModal({ post, onClose }: Props) {
+  const { t } = useI18n()
   const [title, setTitle] = useState(post.title)
   const [description, setDescription] = useState(post.description)
   const [loading, setLoading] = useState(false)
@@ -25,7 +27,7 @@ export default function EditPostModal({ post, onClose }: Props) {
       await updateDoc(doc(db, 'posts', post.id), { title, description })
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Update failed')
+      setError(err instanceof Error ? err.message : t.edit_post_err_update)
     } finally {
       setLoading(false)
     }
@@ -39,7 +41,7 @@ export default function EditPostModal({ post, onClose }: Props) {
       await deleteObject(ref(storage, post.storagePath))
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Delete failed')
+      setError(err instanceof Error ? err.message : t.edit_post_err_delete)
       setDeleting(false)
     }
   }
@@ -48,7 +50,7 @@ export default function EditPostModal({ post, onClose }: Props) {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-neutral-900 rounded-2xl w-full max-w-lg shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-neutral-800">
-          <h2 className="text-lg font-semibold text-white">Edit post</h2>
+          <h2 className="text-lg font-semibold text-white">{t.edit_post_title}</h2>
           <button onClick={onClose} className="text-neutral-400 hover:text-white text-xl leading-none">✕</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
@@ -72,7 +74,7 @@ export default function EditPostModal({ post, onClose }: Props) {
             disabled={loading || !title}
             className="bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium rounded-lg py-2.5 transition-colors"
           >
-            {loading ? 'Saving…' : 'Save changes'}
+            {loading ? t.edit_post_saving : t.edit_post_save}
           </button>
 
           {!confirmDelete ? (
@@ -81,17 +83,17 @@ export default function EditPostModal({ post, onClose }: Props) {
               onClick={() => setConfirmDelete(true)}
               className="text-red-400 hover:text-red-300 text-sm transition-colors"
             >
-              Delete post
+              {t.edit_post_delete}
             </button>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-neutral-400 text-sm flex-1">Are you sure?</span>
+              <span className="text-neutral-400 text-sm flex-1">{t.edit_post_confirm}</span>
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 className="text-neutral-400 hover:text-white text-sm transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 type="button"
@@ -99,7 +101,7 @@ export default function EditPostModal({ post, onClose }: Props) {
                 disabled={deleting}
                 className="bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
               >
-                {deleting ? 'Deleting…' : 'Delete'}
+                {deleting ? t.deleting : t.delete}
               </button>
             </div>
           )}
