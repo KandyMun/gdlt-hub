@@ -1,5 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { isDiscordCallback, completeDiscordLogin } from './discordAuth'
+
+// Module-level guard: ensures the one-time OAuth code is exchanged exactly once,
+// even though React StrictMode runs effects twice in development.
+let discordCallbackHandled = false
 import PostModal from './components/PostModal'
 import { type Post } from './types'
 import { signOut } from 'firebase/auth'
@@ -21,7 +26,7 @@ import VERSION from './version'
 import Spinner from './components/Spinner'
 
 export default function App() {
-  const { user, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
   const isAdmin = useIsAdmin()
   const { frozen } = useSiteConfig()
   const { t, locale, setLocale } = useI18n()
@@ -33,8 +38,36 @@ export default function App() {
   const [notifPost, setNotifPost] = useState<Post | null>(null)
   const [feedKey, setFeedKey] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [authError, setAuthError] = useState('')
 
-  const currentUsername = user?.email?.split('@')[0] ?? ''
+  // Handle the Discord OAuth redirect back to the app (HashRouter-safe).
+  useEffect(() => {
+    if (!isDiscordCallback() || discordCallbackHandled) return
+    discordCallbackHandled = true
+    completeDiscordLogin()
+      .then(() => window.history.replaceState({}, '', import.meta.env.BASE_URL))
+      .catch((e: unknown) => setAuthError(e instanceof Error ? e.message : 'Login failed'))
+  }, [])
+
+  const currentUsername = profile?.username ?? user?.email?.split('@')[0] ?? ''
+
+  if (isDiscordCallback() && !user && !authError) {
+    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center"><Spinner /></div>
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-red-400">{authError}</p>
+        <button
+          onClick={() => { window.history.replaceState({}, '', import.meta.env.BASE_URL); setAuthError('') }}
+          className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg"
+        >
+          OK
+        </button>
+      </div>
+    )
+  }
 
   if (loading) {
     return <div className="min-h-screen bg-neutral-950 flex items-center justify-center"><Spinner /></div>

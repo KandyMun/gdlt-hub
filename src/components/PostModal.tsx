@@ -11,12 +11,14 @@ import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { useIsAdmin } from '../useIsAdmin'
 import { type Post } from '../types'
+import { authorName } from '../authorName'
 
 interface Comment {
   id: string
   text: string
   authorId: string
-  authorEmail: string
+  authorEmail?: string
+  authorUsername?: string
   createdAt: number
 }
 
@@ -30,7 +32,7 @@ interface Props {
 const MAX = 160
 
 export default function PostModal({ post: initialPost, onClose, scrollToComments, frozen }: Props) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { t } = useI18n()
   const isAdmin = useIsAdmin()
   const [post, setPost] = useState<Post>(initialPost)
@@ -66,15 +68,14 @@ export default function PostModal({ post: initialPost, onClose, scrollToComments
   async function submitComment() {
     if (!text.trim() || !user) return
     setSubmitting(true)
+    const commenterUsername = profile?.username ?? user.email?.split('@')[0] ?? ''
     await addDoc(collection(db, 'posts', post.id, 'comments'), {
       text: text.trim(),
       authorId: user.uid,
-      authorEmail: user.email ?? '',
+      authorUsername: commenterUsername,
       createdAt: Date.now(),
     })
     await updateDoc(doc(db, 'posts', post.id), { commentCount: increment(1) })
-    console.log('commenter uid:', user.uid, '| post authorId:', post.authorId, '| same?', user.uid === post.authorId)
-    const commenterUsername = (user.email ?? '').replace('@freepost.local', '')
     const preview = text.trim().slice(0, 80)
     const now = Date.now()
 
@@ -173,11 +174,11 @@ export default function PostModal({ post: initialPost, onClose, scrollToComments
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500 text-xs font-medium flex items-center gap-1.5">
                     <Link
-                      to={`/u/${c.authorEmail.replace('@freepost.local', '')}`}
+                      to={`/u/${authorName(c)}`}
                       className="flex items-center gap-1.5 hover:text-violet-400"
                     >
-                      <Avatar username={c.authorEmail.replace('@freepost.local', '')} size={18} />
-                      <span className="hover:underline">{c.authorEmail.replace('@freepost.local', '')}</span>
+                      <Avatar username={authorName(c)} size={18} />
+                      <span className="hover:underline">{authorName(c)}</span>
                     </Link>
                     {' • '}
                     {(() => {

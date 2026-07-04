@@ -7,6 +7,7 @@ import {
 import { ref, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
 import { type Post } from '../types'
+import { authorName } from '../authorName'
 import { useIsAdmin } from '../useIsAdmin'
 import { useI18n } from '../i18n'
 import PostModal from './PostModal'
@@ -157,12 +158,12 @@ export default function Feed({ onPostModalChange, frozen }: Props) {
         <div className="p-4">
           <div className="flex items-center gap-1.5 text-neutral-500 text-xs mb-1">
             <Link
-              to={`/u/${post.authorEmail.replace('@freepost.local', '')}`}
+              to={`/u/${authorName(post)}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 hover:text-violet-400"
             >
-              <Avatar username={post.authorEmail.replace('@freepost.local', '')} size={20} />
-              <span className="hover:underline">{post.authorEmail.replace('@freepost.local', '')}</span>
+              <Avatar username={authorName(post)} size={20} />
+              <span className="hover:underline">{authorName(post)}</span>
             </Link>
             <span>
               {' • '}

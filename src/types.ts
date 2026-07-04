@@ -5,7 +5,8 @@ export interface Post {
   imageUrl: string
   storagePath: string
   authorId: string
-  authorEmail: string
+  authorEmail?: string
+  authorUsername?: string
   createdAt: number
   isVideo?: boolean
   likeCount?: number

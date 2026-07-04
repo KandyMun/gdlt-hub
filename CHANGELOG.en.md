@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.2] - 2026-07-05
+
+### Added
+- Discord login — instead of a username and password, you now sign in with a single "Log in with Discord" button.
+- Your Discord avatar is used as the default profile picture; you can change it to anything afterwards.
+- Animated (GIF) Discord avatars are supported.
+
+### Changed
+- Your username is now taken from your Discord account.
+
+### System changes
+- Authentication moved to Discord OAuth (Firebase custom token). Logins persist across sessions.
+- Existing accounts can be migrated to the Discord identity along with their posts, comments, likes and profile.
+
 ## [v0.1.2.1] - 2026-07-04
 
 ### Added

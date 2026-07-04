@@ -15,7 +15,7 @@ interface Props {
 const MAX_SIZE = 15 * 1024 * 1024
 
 export default function NewPostModal({ onClose, onPosted }: Props) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { t } = useI18n()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -103,7 +103,7 @@ export default function NewPostModal({ onClose, onPosted }: Props) {
         commentCount: 0,
         likeCount: 0,
         authorId: user.uid,
-        authorEmail: user.email ?? '',
+        authorUsername: profile?.username ?? user.email?.split('@')[0] ?? '',
         createdAt: Date.now(),
       })
       await updateDoc(doc(db, 'users', user.uid), { lastPostAt: Date.now() })

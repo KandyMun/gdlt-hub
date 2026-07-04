@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.2] - 2026-07-05
+
+### Pridėta
+- Prisijungimas per Discord — vietoje vartotojo vardo ir slaptažodžio dabar jungiamasi vienu mygtuku „Prisijungti su Discord".
+- Kaip numatytoji profilio nuotrauka paimama Discord nuotrauka; ją vėliau galima pasikeisti į bet kokią.
+- Palaikomos animuotos (GIF) Discord profilio nuotraukos.
+
+### Pakeista
+- Vartotojo vardas dabar imamas iš Discord paskyros.
+
+### Sisteminiai pokyčiai
+- Autentifikacija perkelta į Discord OAuth (Firebase custom token). Prisijungimas išlieka tarp seansų.
+- Senas paskyras galima perkelti prie Discord tapatybės kartu su įrašais, komentarais, „patinka" ir profiliu.
+
 ## [v0.1.2.1] - 2026-07-04
 
 ### Pridėta

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 import { type Post } from '../types'
+import { authorName } from '../authorName'
 import PostModal from './PostModal'
 
 export default function SearchPage() {
@@ -45,7 +46,7 @@ export default function SearchPage() {
           <div className="flex-1 min-w-0">
             <h3 className="text-white font-semibold truncate">{post.title}</h3>
             {post.description && <p className="text-neutral-400 text-sm mt-1 line-clamp-2">{post.description}</p>}
-            <p className="text-neutral-600 text-xs mt-2">{post.authorEmail.replace('@freepost.local', '')}</p>
+            <p className="text-neutral-600 text-xs mt-2">{authorName(post)}</p>
           </div>
         </div>
       ))}

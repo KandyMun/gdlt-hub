@@ -13,6 +13,11 @@ dist-ssr
 *.local
 .claude
 
+functions/node_modules/
+functions/lib/
+functions/.env
+functions/*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

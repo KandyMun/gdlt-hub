@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 import { type Post } from '../types'
+import { authorName } from '../authorName'
 import { useI18n } from '../i18n'
 import { useSiteConfig } from '../useSiteConfig'
 import { useIsAdmin } from '../useIsAdmin'
@@ -45,7 +46,7 @@ export default function ProfilePosts({ uid }: { uid: string }) {
       ) : (
         <div className="flex flex-col gap-4 w-[70%] mx-auto">
           {posts.map((post) => {
-            const username = post.authorEmail.replace('@freepost.local', '')
+            const username = authorName(post)
             return (
               <div
                 key={post.id}
