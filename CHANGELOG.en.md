@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.2.0.1] - 2026-07-05
+
+### Fixed
+- Profile pictures on posts sometimes didn't appear on the initial page load — they now load right away.
+- Correctly set up the variables needed for Discord login, which hadn't been carried over from the dev environment.
+
 ## [v0.2] - 2026-07-05
 
 ### Added

@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.2.0.1] - 2026-07-05
+
+### Pataisyta
+- Pradžioje įkeliant puslapį, profilių nuotraukos įrašuose kartais nepasirodydavo — dabar jos užsikrauna iš karto.
+- Teisingai nustatyti Discord prisijungimui reikalingi kintamieji, kurie nebuvo perkelti iš dev aplinkos
+
 ## [v0.2] - 2026-07-05
 
 ### Pridėta
