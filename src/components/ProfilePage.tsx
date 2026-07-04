@@ -7,6 +7,7 @@ import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { invalidateProfile } from '../userProfiles'
 import { getRole } from '../roles'
+import ProfilePosts from './ProfilePosts'
 import Spinner from './Spinner'
 
 interface Profile {
@@ -212,6 +213,8 @@ export default function ProfilePage() {
           <p className="text-neutral-600 text-sm italic">{t.profile_no_about}</p>
         )}
       </div>
+
+      <ProfilePosts uid={profile.uid} />
     </div>
   )
 }

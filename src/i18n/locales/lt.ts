@@ -125,6 +125,8 @@ const lt = {
   profile_saving: 'Išsaugoma…',
   profile_saved: 'Išsaugota',
   profile_your_profile: 'Tai jūsų profilis',
+  profile_posts_title: 'Įrašai',
+  profile_posts_empty: 'Įrašų dar nėra.',
   profile_roles_manage: 'Tvarkyti roles',
   profile_roles_hint: 'Tik administratoriui. Spustelėkite rolę, kad ją priskirtumėte ar pašalintumėte šiam naudotojui.',
 }

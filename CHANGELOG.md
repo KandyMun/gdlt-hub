@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.2.1] - 2026-07-04
+
+### Pridėta
+- Profilyje po duomenimis rodomi to vartotojo įrašai — tokiu pačiu formatu kaip pagrindiniame puslapyje, tik išdėstyti vienu stulpeliu.
+- Changelog rodomas pagal pasirinktą kalbą (LT/EN).
+
+### Pakeista
+- Įrašo kūrimo mygtukas perkeltas į apatinį dešinį kampą ir rodomas tik pagrindiniame įrašų puslapyje.
+
 ## [v0.1.2] - 2026-07-04
 
 ### Pridėta

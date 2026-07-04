@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.2.1] - 2026-07-04
+
+### Added
+- A user's posts are now shown on their profile below their details — same format as the main page, just laid out in a single column.
+- The changelog is shown in the selected language (LT/EN).
+
+### Changed
+- The create-post button was moved to the bottom-right corner and only appears on the main posts page.
+
 ## [v0.1.2] - 2026-07-04
 
 ### Added

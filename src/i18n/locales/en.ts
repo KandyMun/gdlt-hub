@@ -121,6 +121,8 @@ const en = {
   profile_saving: 'Saving…',
   profile_saved: 'Saved',
   profile_your_profile: 'This is your profile',
+  profile_posts_title: 'Posts',
+  profile_posts_empty: 'No posts yet.',
   profile_roles_manage: 'Manage roles',
   profile_roles_hint: 'Admin only. Click a role to assign or remove it for this user.',
 }
