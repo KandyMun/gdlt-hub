@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.2.0.2] - 2026-07-05
+
+### Fixed
+- After signing in with Discord, the redirect back to the site didn't work on the published (GitHub) version — the redirect now works both on the published site and in the dev environment.
+
 ## [v0.2.0.1] - 2026-07-05
 
 ### Fixed

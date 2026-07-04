@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.2.0.2] - 2026-07-05
+
+### Pataisyta
+- Prisijungus per Discord, grįžimas atgal į puslapį neveikė publikuotoje (GitHub) versijoje — dabar nukreipimas veikia tiek publikuotoje, tiek kūrimo aplinkoje.
+
 ## [v0.2.0.1] - 2026-07-05
 
 ### Pataisyta
