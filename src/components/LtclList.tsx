@@ -3,7 +3,26 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { useLtclLevels, averageEnjoyment, LEGACY_AFTER, type LtclLevel, type LtclRecord } from '../ltclLevels'
 import { useDisplayName } from './AuthorLink'
+import { levelThumbnailUrl } from '../aredl'
 import Spinner from './Spinner'
+
+// Blurred, darkened backdrop of the selected level's thumbnail — same source as
+// the AREDL hardest-demon banner. Fades in on load; shows nothing on error.
+function LevelBackdrop({ levelId }: { levelId: number }) {
+  const [ok, setOk] = useState(false)
+  useEffect(() => { setOk(false) }, [levelId])
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <img
+        src={levelThumbnailUrl(levelId)}
+        alt=""
+        onLoad={() => setOk(true)}
+        className={`w-full h-full object-cover scale-110 blur-2xl transition-opacity duration-500 ${ok ? 'opacity-25' : 'opacity-0'}`}
+      />
+      <div className="absolute inset-0 bg-neutral-950/70" />
+    </div>
+  )
+}
 
 // A player's handle shown as their chosen display name, linking to their profile.
 function ProfileLink({ handle, className = 'hover:text-violet-400 hover:underline' }: { handle: string; className?: string }) {
@@ -186,9 +205,11 @@ export default function LtclList() {
   if (!loaded) return <div className="flex justify-center py-20"><Spinner /></div>
 
   return (
-    <div className="p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,20rem)_1fr_minmax(0,16rem)] gap-4">
+    <div className="relative">
+      {current && <LevelBackdrop levelId={current.levelId} />}
+      <div className="relative p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] gap-4">
       {/* Left: ranked list */}
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-3 flex flex-col gap-2">
+      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-3 flex flex-col gap-2">
         <input
           type="text"
           placeholder={t.ltcl_list_search}
@@ -231,7 +252,7 @@ export default function LtclList() {
       </div>
 
       {/* Center: selected level details */}
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6">
+      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-6">
         {current ? (
           <LevelDetails level={current} rank={currentRank} />
         ) : (
@@ -240,7 +261,7 @@ export default function LtclList() {
       </div>
 
       {/* Right: records */}
-      <aside className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
+      <aside className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-4">
         <h2 className="text-lg font-bold text-white mb-3">{t.ltcl_list_records}</h2>
         {current && current.records.length > 0 ? (
           <div className="flex flex-col gap-2">
@@ -252,6 +273,7 @@ export default function LtclList() {
           <p className="text-neutral-500 text-sm">{t.ltcl_list_no_records}</p>
         )}
       </aside>
+      </div>
     </div>
   )
 }

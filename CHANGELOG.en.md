@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.0.1] - 2026-07-08
+
+### Pakeista
+- LTCL level list now spans the entire page width.
+- Added support for level thumbnail display in the background. Currently they are not shown because the images are not uploaded for use.
+- Reduced the existing segment background opacity to make the page background more visible
+
+
 ## [v0.5] - 2026-07-07
 
 ### Added

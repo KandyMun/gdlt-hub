@@ -25,7 +25,7 @@ export default function LtclPage() {
   const { t } = useI18n()
 
   return (
-    <main className="max-w-7xl mx-auto">
+    <main className="w-full">
       <Routes>
         <Route path="" element={<LtclHome />} />
         <Route path="rules" element={<LtclRules />} />

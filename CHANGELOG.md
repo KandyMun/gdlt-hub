@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.5.0.1] - 2026-07-08
+
+### Pakeista
+- LTCL lygių sąrašas dabar yra per visą ekrano plotį.
+- Pridėta galimybė rodyti lygių nuotraukas puslapio fone, šiuo metu jų nėra nes nuotraukos nėra sukeltos.
+- Sumažintas esamų skilčių fonų skaidrumas kad būtų matomesnis puslapio fonas.
+
 ## [v0.5] - 2026-07-07
 
 ### Pridėta

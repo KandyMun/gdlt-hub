@@ -95,7 +95,7 @@ export default function LtclHome() {
     .filter((g) => g.members.length > 0)
 
   return (
-    <div className="px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Left / main column */}
       <div className="lg:col-span-2 flex flex-col gap-4">
         {/* Welcome */}
