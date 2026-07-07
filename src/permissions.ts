@@ -8,11 +8,9 @@ import { useAuth } from './AuthContext'
 // IMPORTANT: this is UX gating only. Enforcement lives in Firestore rules —
 // keep firestore.rules in sync with this map.
 
-// Note: a record's `enjoyment` is subjective and belongs to the record submitter.
-// No staff role can edit it — there is deliberately no capability for it.
 export type Capability =
   | 'manage_levels' // add / edit / delete / reorder LTCL levels + level metadata
-  | 'manage_records' // add / remove records on a level (never the enjoyment value)
+  | 'manage_records' // add / edit / remove records on a level, incl. enjoyment
   | 'edit_rules' // edit the LTCL rules text
   | 'assign_roles' // grant / remove roles on users
   | 'manage_site' // site-wide admin (freeze, posts, users, bans)

@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { useAuth } from '../AuthContext'
 import { useIsAdmin } from '../useIsAdmin'
+import { useCan } from '../permissions'
 import { useSiteConfig } from '../useSiteConfig'
 import { useI18n } from '../i18n'
 import { type Post } from '../types'
@@ -22,6 +23,7 @@ import VERSION from '../version'
 export default function Layout() {
   const { user, profile } = useAuth()
   const isAdmin = useIsAdmin()
+  const canManageSite = useCan('manage_site')
   const { frozen } = useSiteConfig()
   const { t, locale, setLocale } = useI18n()
   const navigate = useNavigate()
@@ -41,8 +43,9 @@ export default function Layout() {
   const onHome = location.pathname === '/'
   const inFreepost = location.pathname.startsWith('/freepost')
   const inLtcl = location.pathname.startsWith('/ltcl')
-  const pageLabel = inFreepost ? 'freepost' : inLtcl ? 'LTCL' : null
-  const middle = inFreepost ? <FreepostNav /> : inLtcl ? <LtclNav /> : <HomeNav />
+  const inAdmin = location.pathname.startsWith('/admin')
+  const pageLabel = inFreepost ? 'freepost' : inLtcl ? 'LTCL' : inAdmin ? 'admin' : null
+  const middle = inFreepost ? <FreepostNav /> : inLtcl ? <LtclNav /> : inAdmin ? null : <HomeNav />
 
   return (
     <div className="min-h-screen bg-neutral-950">
@@ -107,6 +110,14 @@ export default function Layout() {
                     >
                       {t.nav_myposts}
                     </button>
+                    {canManageSite && (
+                      <button
+                        onClick={() => { setMenuOpen(false); navigate('/admin') }}
+                        className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"
+                      >
+                        {t.nav_admin}
+                      </button>
+                    )}
                     <button
                       onClick={() => { setMenuOpen(false); signOut(auth); navigate('/', { replace: true }) }}
                       className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-neutral-800 transition-colors"

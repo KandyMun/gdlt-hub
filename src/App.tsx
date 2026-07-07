@@ -10,6 +10,7 @@ import ChangelogPage from './components/ChangelogPage'
 import ProfilePage from './components/ProfilePage'
 import LtclPage from './components/LtclPage'
 import UserSearch from './components/UserSearch'
+import AdminPage from './components/admin/AdminPage'
 import FreepostApp from './FreepostApp'
 
 // Module-level guard: exchange the one-time OAuth code exactly once, even though
@@ -67,6 +68,8 @@ export default function App() {
         <Route path="/u/:username" element={<ProfilePage />} />
         <Route path="/user-search" element={<UserSearch />} />
         <Route path="/ltcl/*" element={<LtclPage />} />
+        {/* Hub-wide admin panel. Self-gates on the manage_site capability. */}
+        <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/freepost/*" element={<FreepostApp />} />
       </Route>
     </Routes>

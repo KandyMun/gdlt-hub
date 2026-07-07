@@ -1,10 +1,13 @@
-import { onRequest } from 'firebase-functions/v2/https'
+import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https'
 import { defineSecret, defineString } from 'firebase-functions/params'
 import * as logger from 'firebase-functions/logger'
 import * as admin from 'firebase-admin'
 
 admin.initializeApp()
 const db = admin.firestore()
+
+// The hardcoded super-admin uid — kept in sync with firestore.rules.
+const SUPER_ADMIN_UID = 'iG5pZlJrNYSyU7IONYNnoo3XFYp2'
 
 // Public — set in functions/.env (DISCORD_CLIENT_ID=...)
 const DISCORD_CLIENT_ID = defineString('DISCORD_CLIENT_ID')
@@ -112,3 +115,138 @@ export const discordAuth = onRequest(
     }
   },
 )
+
+interface MergeResult {
+  dryRun: boolean
+  fromUid: string
+  toUid: string
+  targetUsername: string
+  postsReassigned: number
+  likeArrays: number
+  comments: number
+  notifications: number
+  rolesAfter: string[]
+}
+
+/**
+ * Merge one account into another: reassign all content authored by `fromUid` to
+ * `toUid`, merge the source profile into the target (target wins; roles unioned,
+ * earliest join date kept, blank bio/avatar filled from source), then delete the
+ * source user doc and its Auth login.
+ *
+ * Admin-only. Runs with Admin SDK privileges, so it bypasses Firestore rules —
+ * this is why the operation lives here and not in the browser. Pass
+ * `dryRun: true` to get the counts without writing anything.
+ *
+ * Client: httpsCallable(functions, 'mergeAccounts')({ fromUid, toUid, dryRun })
+ */
+export const mergeAccounts = onCall(async (request): Promise<MergeResult> => {
+  const caller = request.auth
+  if (!caller) throw new HttpsError('unauthenticated', 'Sign in required.')
+
+  // Verify the caller is a site admin (super-admin uid or `administrator` role).
+  const callerSnap = await db.collection('users').doc(caller.uid).get()
+  const callerRoles: string[] = callerSnap.data()?.roles ?? []
+  const isAdmin = caller.uid === SUPER_ADMIN_UID || callerRoles.includes('administrator')
+  if (!isAdmin) throw new HttpsError('permission-denied', 'Admins only.')
+
+  const { fromUid, toUid, dryRun } = (request.data ?? {}) as {
+    fromUid?: string; toUid?: string; dryRun?: boolean
+  }
+  if (!fromUid || !toUid) throw new HttpsError('invalid-argument', 'fromUid and toUid are required.')
+  if (fromUid === toUid) throw new HttpsError('invalid-argument', 'Pick two different accounts.')
+  if (fromUid === SUPER_ADMIN_UID) {
+    throw new HttpsError('failed-precondition', 'Refusing to delete the super-admin account.')
+  }
+
+  const [fromSnap, toSnap] = await Promise.all([
+    db.collection('users').doc(fromUid).get(),
+    db.collection('users').doc(toUid).get(),
+  ])
+  if (!toSnap.exists) throw new HttpsError('not-found', 'Target account does not exist.')
+  const fromData = fromSnap.data() ?? {}
+  const toData = toSnap.data() ?? {}
+  const targetUsername: string = toData.username ?? ''
+
+  let postsReassigned = 0
+  let likeArrays = 0
+  let comments = 0
+  let notifications = 0
+
+  let batch = db.batch()
+  let ops = 0
+  const flush = async () => {
+    if (ops && !dryRun) await batch.commit()
+    if (ops) { batch = db.batch(); ops = 0 }
+  }
+  const queue = async (fn: () => void) => { fn(); if (++ops >= 400) await flush() }
+
+  // ── Posts: authorship, like/dislike arrays, and nested comments ──
+  const postsSnap = await db.collection('posts').get()
+  for (const post of postsSnap.docs) {
+    const d = post.data()
+    const updates: Record<string, unknown> = {}
+    if (d.authorId === fromUid) {
+      updates.authorId = toUid
+      updates.authorUsername = targetUsername
+      postsReassigned++
+    }
+    for (const field of ['likedBy', 'dislikedBy']) {
+      const arr = d[field]
+      if (Array.isArray(arr) && arr.includes(fromUid)) {
+        updates[field] = [...new Set(arr.map((id: string) => (id === fromUid ? toUid : id)))]
+        likeArrays++
+      }
+    }
+    if (Object.keys(updates).length) await queue(() => batch.update(post.ref, updates))
+
+    const cs = await post.ref.collection('comments').where('authorId', '==', fromUid).get()
+    for (const c of cs.docs) {
+      comments++
+      await queue(() => batch.update(c.ref, { authorId: toUid, authorUsername: targetUsername }))
+    }
+  }
+  await flush()
+
+  // ── Notifications addressed to the source uid ──
+  const ns = await db.collection('notifications').where('userId', '==', fromUid).get()
+  for (const n of ns.docs) {
+    notifications++
+    await queue(() => batch.update(n.ref, { userId: toUid }))
+  }
+  await flush()
+
+  // ── Profile merge (target wins) ──
+  const rolesAfter = [...new Set([...(toData.roles ?? []), ...(fromData.roles ?? [])])]
+  const profilePatch: Record<string, unknown> = { roles: rolesAfter }
+  const fromCreated = typeof fromData.createdAt === 'number' ? fromData.createdAt : Infinity
+  const toCreated = typeof toData.createdAt === 'number' ? toData.createdAt : Infinity
+  const earliest = Math.min(fromCreated, toCreated)
+  if (Number.isFinite(earliest)) profilePatch.createdAt = earliest
+  if (!toData.about && fromData.about) profilePatch.about = fromData.about
+  if (!toData.photoURL && fromData.photoURL) profilePatch.photoURL = fromData.photoURL
+
+  if (!dryRun) {
+    await db.collection('users').doc(toUid).set(profilePatch, { merge: true })
+    if (fromSnap.exists) await db.collection('users').doc(fromUid).delete()
+    // The doc may not have a matching Auth account (e.g. seed data) — ignore that.
+    await admin.auth().deleteUser(fromUid).catch((e) =>
+      logger.warn(`mergeAccounts: auth delete skipped for ${fromUid}: ${e.message}`),
+    )
+    logger.info(`mergeAccounts: ${fromUid} -> ${toUid} by ${caller.uid}`, {
+      postsReassigned, likeArrays, comments, notifications,
+    })
+  }
+
+  return {
+    dryRun: !!dryRun,
+    fromUid,
+    toUid,
+    targetUsername,
+    postsReassigned,
+    likeArrays,
+    comments,
+    notifications,
+    rolesAfter,
+  }
+})

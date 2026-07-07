@@ -14,7 +14,7 @@ import AredlStats from './AredlStats'
 import LtclStats from './LtclStats'
 import GdStats from './GdStats'
 import BadgePill from './BadgePill'
-import { useBadges } from '../badges'
+import { useBadges, type Badge } from '../badges'
 import Spinner from './Spinner'
 
 interface Profile {
@@ -272,14 +272,29 @@ export default function ProfilePage() {
         {(profile.displayName || profile.username) !== profile.username && (
           <p className="text-neutral-500 text-sm">@{profile.username}</p>
         )}
-        {profile.badges && profile.badges.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5 mt-2">
-            {profile.badges.map((id) => {
-              const b = allBadges.find((x) => x.id === id)
-              return b ? <BadgePill key={id} badge={b} /> : null
-            })}
-          </div>
-        )}
+        {profile.badges && profile.badges.length > 0 && (() => {
+          // Show plain badges and background-art badges on separate rows since
+          // the two styles look different side by side.
+          const owned = profile.badges
+            .map((id) => allBadges.find((x) => x.id === id))
+            .filter((b): b is Badge => !!b)
+          const plainBadges = owned.filter((b) => !b.background)
+          const bgBadges = owned.filter((b) => b.background)
+          return (
+            <div className="flex flex-col items-center gap-2 mt-2">
+              {plainBadges.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {plainBadges.map((b) => <BadgePill key={b.id} badge={b} />)}
+                </div>
+              )}
+              {bgBadges.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {bgBadges.map((b) => <BadgePill key={b.id} badge={b} />)}
+                </div>
+              )}
+            </div>
+          )
+        })()}
         <SocialLinksRow socials={profile.socials} customLinks={profile.customLinks} />
         {profile.createdAt && (
           <p className="text-neutral-500 text-sm mt-3">

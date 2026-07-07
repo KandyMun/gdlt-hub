@@ -6,7 +6,6 @@ import { useSiteConfig } from './useSiteConfig'
 import { useI18n } from './i18n'
 import Feed from './components/Feed'
 import MyPosts from './components/MyPosts'
-import UsersPage from './components/UsersPage'
 import NewPostModal from './components/NewPostModal'
 
 // The freepost body, mounted at /freepost/* under the shared Layout. The top bar
@@ -34,7 +33,6 @@ export default function FreepostApp() {
         <Routes>
           <Route path="" element={<Feed key={feedKey} onPostModalChange={setPostModalOpen} frozen={frozen && !isAdmin} />} />
           {user && <Route path="myposts" element={<MyPosts />} />}
-          {isAdmin && <Route path="users" element={<UsersPage />} />}
         </Routes>
       </main>
 

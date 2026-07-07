@@ -3,8 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { useLtclLevels, averageEnjoyment, LEGACY_AFTER, type LtclLevel, type LtclRecord } from '../ltclLevels'
 import { useDisplayName } from './AuthorLink'
-import { useCan } from '../permissions'
-import LtclLevelEditor from './LtclLevelEditor'
 import Spinner from './Spinner'
 
 // A player's handle shown as their chosen display name, linking to their profile.
@@ -155,15 +153,10 @@ function LevelDetails({ level, rank }: { level: LtclLevel; rank: number }) {
 
 export default function LtclList() {
   const { t } = useI18n()
-  const canManageLevels = useCan('manage_levels')
-  const canManageRecords = useCan('manage_records')
-  const canEdit = canManageLevels || canManageRecords
   const { levels, loaded } = useLtclLevels()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
-  const [editing, setEditing] = useState<LtclLevel | null>(null)
-  const [adding, setAdding] = useState(false)
 
   // Select a level from the ?level= param (e.g. linked from the leaderboard).
   const paramLevel = searchParams.get('level')
@@ -196,14 +189,6 @@ export default function LtclList() {
     <div className="p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,20rem)_1fr_minmax(0,16rem)] gap-4">
       {/* Left: ranked list */}
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-3 flex flex-col gap-2">
-        {canManageLevels && (
-          <button
-            onClick={() => setAdding(true)}
-            className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
-          >
-            + {t.ltcl_admin_add}
-          </button>
-        )}
         <input
           type="text"
           placeholder={t.ltcl_list_search}
@@ -247,16 +232,6 @@ export default function LtclList() {
 
       {/* Center: selected level details */}
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6">
-        {canEdit && current && (
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={() => setEditing(current)}
-              className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-            >
-              {t.ltcl_admin_edit}
-            </button>
-          </div>
-        )}
         {current ? (
           <LevelDetails level={current} rank={currentRank} />
         ) : (
@@ -277,15 +252,6 @@ export default function LtclList() {
           <p className="text-neutral-500 text-sm">{t.ltcl_list_no_records}</p>
         )}
       </aside>
-
-      {(adding || editing) && (
-        <LtclLevelEditor
-          level={adding ? null : editing}
-          levels={levels}
-          canManageLevels={canManageLevels}
-          onClose={() => { setAdding(false); setEditing(null) }}
-        />
-      )}
     </div>
   )
 }

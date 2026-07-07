@@ -17,6 +17,10 @@ interface Props {
   onClose: () => void
 }
 
+// While editing, record fields are held as plain strings so partial input like
+// "7." types cleanly; they're parsed back to numbers on save.
+type EditRecord = { username: string; enjoyment: string; video: string }
+
 const blank: LtclLevel = {
   levelId: 0,
   name: '',
@@ -52,7 +56,13 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
   const [placement, setPlacement] = useState(
     base.placement != null ? String(base.placement) : String(levels.length + 1),
   )
-  const [records, setRecords] = useState<LtclRecord[]>(base.records)
+  const [records, setRecords] = useState<EditRecord[]>(
+    base.records.map((r) => ({
+      username: r.username,
+      enjoyment: r.enjoyment == null ? '' : String(r.enjoyment),
+      video: r.video ?? '',
+    })),
+  )
 
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -62,18 +72,22 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
   const placementNum = Math.max(1, Number(placement) || 1)
   const previewPoints = pointsForPlacement(placementNum)
 
-  function setRecord(i: number, patch: Partial<LtclRecord>) {
+  function setRecord(i: number, patch: Partial<EditRecord>) {
     setRecords((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
   }
 
   function cleanRecords(): LtclRecord[] {
     return records
       .filter((r) => r.username.trim())
-      .map((r) => ({
-        username: r.username.trim(),
-        enjoyment: r.enjoyment === null || Number.isNaN(r.enjoyment) ? null : Number(r.enjoyment),
-        video: r.video?.trim() ? r.video.trim() : null,
-      }))
+      .map((r) => {
+        const e = r.enjoyment.trim()
+        const n = e === '' ? null : Number(e)
+        return {
+          username: r.username.trim(),
+          enjoyment: n === null || Number.isNaN(n) ? null : n,
+          video: r.video.trim() ? r.video.trim() : null,
+        }
+      })
   }
 
   async function handleSave() {
@@ -220,38 +234,45 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
             <div className="flex items-center justify-between">
               <label className={labelCls}>{t.ltcl_list_records}</label>
               <button
-                onClick={() => setRecords((rs) => [...rs, { username: '', enjoyment: null, video: null }])}
+                onClick={() => setRecords((rs) => [...rs, { username: '', enjoyment: '', video: '' }])}
                 className="text-violet-400 hover:text-violet-300 text-sm font-medium"
               >
                 + {t.ltcl_edit_add_record}
               </button>
             </div>
+            {records.length > 0 && (
+              <div className="grid grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)_1.25rem] gap-2 px-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                <span>{t.ltcl_edit_username}</span>
+                <span className="text-center">{t.ltcl_edit_enjoyment}</span>
+                <span>{t.ltcl_edit_video}</span>
+                <span />
+              </div>
+            )}
             {records.map((r, i) => (
-              <div key={i} className="flex gap-2 items-center">
+              <div key={i} className="grid grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)_1.25rem] gap-2 items-center">
                 <input
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} min-w-0`}
                   placeholder={t.ltcl_edit_username}
                   value={r.username}
                   onChange={(e) => setRecord(i, { username: e.target.value })}
                 />
-                {/* Enjoyment is the submitter's own rating — never staff-editable. */}
+                {/* Enjoyment is editable by list admins and moderators. */}
                 <input
-                  className={`${inputCls} opacity-60 cursor-not-allowed w-16`}
-                  placeholder={t.ltcl_edit_enjoyment}
-                  value={r.enjoyment ?? ''}
+                  className={`${inputCls} min-w-0 text-center px-1`}
+                  placeholder="0–10"
+                  value={r.enjoyment}
                   inputMode="decimal"
-                  disabled
-                  title={t.ltcl_edit_enjoyment_locked}
+                  onChange={(e) => setRecord(i, { enjoyment: e.target.value })}
                 />
                 <input
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} min-w-0`}
                   placeholder={t.ltcl_edit_video}
-                  value={r.video ?? ''}
+                  value={r.video}
                   onChange={(e) => setRecord(i, { video: e.target.value })}
                 />
                 <button
                   onClick={() => setRecords((rs) => rs.filter((_, j) => j !== i))}
-                  className="text-neutral-500 hover:text-red-400 px-1"
+                  className="text-neutral-500 hover:text-red-400"
                   aria-label="remove"
                 >
                   ✕

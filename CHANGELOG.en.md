@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5] - 2026-07-07
+
+### Added
+- LTCL admin panel — a single place for list staff to add, edit, delete and reorder levels, manage records, and edit the rules, each gated by the appropriate role.
+- Formatted rules — the LTCL rules now support rich text (Markdown) and render with headings, bold, lists and links. List staff edit them with a formatting toolbar and a live preview showing exactly how they'll appear.
+
+### Changed
+- The public LTCL List and Rules pages are now view-only; list staff make changes from the new LTCL admin panel.
+- The LTCL staff list on the home page is now generated automatically from roles (Owners, List Admins, List Moderators, Developers) instead of a fixed list.
+- List Admins and Moderators can now edit a record's enjoyment value.
+- Badges on profiles are now grouped into standard and background-art styles.
+
+### Fixed
+- The level record editor layout — the enjoyment field no longer takes up most of the row; records now have aligned Player / Enjoyment / Video columns.
+
 ## [v0.4] - 2026-07-06
 
 ### Added

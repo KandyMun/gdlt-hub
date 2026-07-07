@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5] - 2026-07-07
+
+### Pridėta
+- LTCL administravimo skydelis — viena vieta sąrašo personalui pridėti, redaguoti, trinti ir perrikiuoti lygius, tvarkyti rekordus bei redaguoti taisykles; kiekvienas įrankis pasiekiamas pagal atitinkamą rolę.
+- Formatuojamos taisyklės — LTCL taisyklės dabar palaiko formatuotą tekstą (Markdown) ir rodomos su antraštėmis, paryškinimu, sąrašais bei nuorodomis. Sąrašo personalas jas redaguoja su formatavimo įrankių juosta ir tiesiogine peržiūra, rodančia tiksliai, kaip jos atrodys.
+
+### Pakeista
+- Vieši LTCL Sąrašo ir Taisyklių puslapiai dabar skirti tik peržiūrai; sąrašo personalas keitimus atlieka naujame LTCL administravimo skydelyje.
+- LTCL personalo sąrašas pagrindiniame puslapyje dabar generuojamas automatiškai iš rolių (Savininkai, Sąrašo administratoriai, Sąrašo moderatoriai, Programuotojai), o ne iš fiksuoto sąrašo.
+- Sąrašo administratoriai ir moderatoriai dabar gali redaguoti rekordo „enjoyment" vertę.
+- Ženkleliai profiliuose dabar suskirstyti į įprastą ir su fono paveikslėliu stilius.
+
+### Pataisyta
+- Lygio rekordų redaktoriaus išdėstymas — „enjoyment" laukas nebeužima didžiosios eilutės dalies; rekordai dabar turi sulygiuotus „Žaidėjas / Enjoyment / Vaizdo įrašas" stulpelius.
+
 ## [v0.4] - 2026-07-06
 
 ### Pridėta

@@ -6,8 +6,13 @@ import {
   setDoc,
   deleteDoc,
   updateDoc,
+  deleteField,
   arrayUnion,
   arrayRemove,
+  query,
+  where,
+  getDocs,
+  writeBatch,
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from './firebase'
@@ -67,11 +72,31 @@ export async function createBadge(b: Omit<Badge, 'id'>): Promise<string> {
   return id
 }
 
+// Update a badge. Unlike create, an `undefined` field here clears the stored
+// value (so edits can remove an optional icon/colour/background/date).
 export async function updateBadge(id: string, patch: Partial<Omit<Badge, 'id'>>): Promise<void> {
-  await updateDoc(doc(db, 'badges', id), pruneUndefined(patch))
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(patch)) out[k] = v === undefined ? deleteField() : v
+  await updateDoc(doc(db, 'badges', id), out)
 }
 
+// How many users currently wear this badge — shown before deleting.
+export async function countBadgeHolders(id: string): Promise<number> {
+  const snap = await getDocs(query(collection(db, 'users'), where('badges', 'array-contains', id)))
+  return snap.size
+}
+
+// Delete a badge: first strip it from every user that has it (so no dead
+// references linger), then remove the definition itself.
 export async function deleteBadge(id: string): Promise<void> {
+  const snap = await getDocs(query(collection(db, 'users'), where('badges', 'array-contains', id)))
+  let batch = writeBatch(db)
+  let ops = 0
+  for (const d of snap.docs) {
+    batch.update(d.ref, { badges: arrayRemove(id) })
+    if (++ops >= 400) { await batch.commit(); batch = writeBatch(db); ops = 0 }
+  }
+  if (ops) await batch.commit()
   await deleteDoc(doc(db, 'badges', id))
 }
 
