@@ -18,6 +18,9 @@ const lt = {
   home_freepost_desc: 'Kelk nuotraukas ir kvailiok su draugais.',
   home_ltcl_desc: 'Lietuvos iššūkių sąrašas.',
   home_search_desc: 'Rask žmones visame hub\'e.',
+  home_changelog_title: 'Naujausi pakeitimai',
+  home_changelog_view_all: 'Visas žurnalas',
+  home_changelog_more: (n: number) => `+${n} daugiau`,
 
   // LTCL
   ltcl_title: 'Lietuvos iššūkių sąrašas',

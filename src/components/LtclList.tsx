@@ -25,11 +25,13 @@ function LevelBackdrop({ src }: { src: string }) {
   )
 }
 
-// A player's handle shown as their chosen display name, linking to their profile.
+// A player's handle shown as their chosen display name, linking to their LTCL
+// stats page — not every credited/completing player has a gdlt-hub account
+// (many are leftovers from the old list), but everyone has an LTCL page.
 function ProfileLink({ handle, className = 'hover:text-violet-400 hover:underline' }: { handle: string; className?: string }) {
   const name = useDisplayName(handle)
   return (
-    <Link to={`/u/${handle.toLowerCase()}`} className={className}>
+    <Link to={`/ltcl/leaderboard/${handle.toLowerCase()}`} className={className}>
       {name}
     </Link>
   )

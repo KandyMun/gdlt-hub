@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.5.2.1] - 2026-07-08
+
+### Pridėta
+- Naujausių pakeitimų kortelė pagrindiniame puslapyje (Labas!!!!!!) — šone rodomi 3 naujausi žurnalo įrašai su nuoroda į pilną pakeitimų žurnalą.
+
+### Pakeista
+- LTCL: paspaudus žaidėjo vardą lygio informacijoje (kūrėjai, patvirtinęs, įkėlęs) ar rekorduose, dabar nukreipiama į jo LTCL statistikos puslapį, o ne gdlt-hub profilį — ne visi žaidėjai (senojo sąrašo likučiai) turi čia susikūrę paskyrą.
+
+### Pataisyta
+- LTCL statistikos puslapyje nuoroda „Pagrindinis profilis" nebėra rodoma žaidėjams, kurie neturi gdlt-hub paskyros.
+
 ## [v0.5.2] - 2026-07-08
 
 ### Pridėta

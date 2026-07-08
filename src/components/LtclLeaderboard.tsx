@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { useLtclLevels, buildLeaderboard, LEGACY_AFTER, type LbEntry, type LtclLevel } from '../ltclLevels'
 import { useDisplayName } from './AuthorLink'
+import { useProfile } from '../userProfiles'
 import Spinner from './Spinner'
 
 // Names of challenges, bold for main list and italic for legacy.
@@ -56,6 +57,9 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
 function UserDetail({ entry, rank }: { entry: LbEntry; rank: number }) {
   const { t } = useI18n()
   const name = useDisplayName(entry.handle)
+  // Many LTCL names are leftovers from the old list and were never registered
+  // here — only link to a gdlt-hub profile when one actually exists.
+  const profile = useProfile(entry.handle)
   const main = entry.completed.filter((l) => (l.placement ?? 0) <= LEGACY_AFTER).length
   const legacy = entry.completed.length - main
   // Lists are alphabetical; hardest = the completed level with the top placement.
@@ -68,12 +72,14 @@ function UserDetail({ entry, rank }: { entry: LbEntry; rank: number }) {
     <div className="max-w-3xl mx-auto flex flex-col gap-8">
       <div className="flex flex-col items-center gap-3">
         <h1 className="text-4xl font-bold text-white text-center">{name}</h1>
-        <Link
-          to={`/u/${entry.handle}`}
-          className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-        >
-          {t.ltcl_lb_view_profile} →
-        </Link>
+        {profile && (
+          <Link
+            to={`/u/${entry.handle}`}
+            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+          >
+            {t.ltcl_lb_view_profile} →
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">

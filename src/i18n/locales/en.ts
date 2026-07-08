@@ -18,6 +18,9 @@ const en = {
   home_freepost_desc: 'Post images and mess around with friends.',
   home_ltcl_desc: 'The Lithuanian Challenge List.',
   home_search_desc: 'Find people across the hub.',
+  home_changelog_title: 'Recent changes',
+  home_changelog_view_all: 'Full changelog',
+  home_changelog_more: (n: number) => `+${n} more`,
 
   // LTCL
   ltcl_title: 'Lithuanian Challenge List',

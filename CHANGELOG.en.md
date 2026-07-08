@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.5.2.1] - 2026-07-08
+
+### Added
+- Recent changes card on the homepage (Hello!!!!!!) — shows the last 3 changelog entries in a sidebar, with a link to the full changelog.
+
+### Changed
+- LTCL: clicking a player's name in level info (creators, verifier, publisher) or records now goes to their LTCL stats page instead of their gdlt-hub profile — not every player (leftovers from the old list) has created an account here.
+
+### Fixed
+- The "Main profile" link on the LTCL stats page no longer shows for players who don't have a gdlt-hub account.
+
 ## [v0.5.2] - 2026-07-08
 
 ### Added
