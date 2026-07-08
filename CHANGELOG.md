@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.2] - 2026-07-08
+
+### Pridėta
+- Failų vilkimas ir paleidimas — visi failų įkėlimai dabar priima užvilktą paveikslėlį: profilio nuotrauka, ženklelio ikona ir fonas (administravimas) bei lygio miniatiūra; kiekvienas pasišviečia velkant virš jo. Paspaudus naršyti taip pat veikia.
+- GD statistika dabar rodoma su ikonomis (žvaigždė, mėnulis, deimantas, vartotojo moneta, slapta moneta, demonas, kūrėjo taškai) vietoj teksto etikečių; vieta lyderių lentelėje žymima trofėjaus ikona.
+- Naujas „Sujungti profilius" skirtukas LTCL administravimo skydelyje — sąrašo administratoriai gali susieti LTCL lyderių lentelės vardą (kuriam nereikia paskyros) su tikra gdlt-hub paskyra; visos to vardo vietos lygių sąraše perrašomos į paskyros vartotojo vardą, kad visur teisingai rodytųsi profilis ir vardas.
+- Pridedant LTCL rekordą, vartotojo vardo laukas dabar siūlo esamas svetainės paskyras rašant, tačiau vardą vis tiek galima įvesti ranka žaidėjams be paskyros.
+
+### Pakeista
+- LTCL statistikos kortelė profilyje dabar rodo sunkiausio lygio įkeltą individualią miniatiūrą, jei tokia yra; jei ne — naudojama automatinė miniatiūra (pagal lygio ID), kaip ir anksčiau.
+- LTCL ir AREDL statistikos kortelės profilyje dabar naudoja tą patį suskirstytą, matinio stiklo išdėstymą kaip Sąrašo puslapis, su sunkiausio lygio/demono miniatiūra kaip išblukusiu kortelės fonu.
+- GD statistikos kortelė dabar turi fiksuotą fono paveikslėlį, o susietas vartotojo vardas rodomas atskirame, centruotame segmente.
+
+### Pataisyta
+- Lygio miniatiūros fonas Sąrašo puslapyje nebėra stipriai išblukęs — dabar jis rodomas ryškus ir aiškiai atpažįstamas. Skilčių fonai išlaiko lengvesnį matinio stiklo efektą.
+
 ## [v0.5.1] - 2026-07-08
 
 ### Pridėta

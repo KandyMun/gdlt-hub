@@ -107,6 +107,67 @@ export function buildLeaderboard(levels: LtclLevel[]): LbEntry[] {
   return [...map.values()].sort((a, b) => b.points - a.points || a.handle.localeCompare(b.handle))
 }
 
+// ─── Merging LTCL identities into real accounts ────────────────────────────
+// LTCL completer/creator/verifier "identities" are just raw name strings (see
+// the comment above LtclRecord) — there's no account required to show up on
+// the leaderboard. Once a player makes a gdlt-hub account, a list admin can
+// merge their LTCL name into it: every occurrence of that name is rewritten
+// to the account's canonical username, so profile links + display names
+// resolve everywhere (leaderboard, level credits, records) going forward.
+
+// True if a raw LTCL name field refers to the same identity as `handle` (a
+// pre-normalized, i.e. trimmed + lowercased, name).
+function sameIdentity(name: string, handle: string): boolean {
+  return name.trim().toLowerCase() === handle
+}
+
+// Number of levels that reference `handle` anywhere in publisher/creators/
+// verifier/records — lets the UI preview a merge's scope before writing.
+export function countLtclProfileMatches(levels: LtclLevel[], handle: string): number {
+  const h = handle.trim().toLowerCase()
+  if (!h) return 0
+  return levels.filter(
+    (lv) =>
+      sameIdentity(lv.publisher, h) ||
+      sameIdentity(lv.verifier, h) ||
+      lv.creators.some((c) => sameIdentity(c, h)) ||
+      lv.records.some((r) => sameIdentity(r.username, h)),
+  ).length
+}
+
+// Rewrite every occurrence of `handle` (case/whitespace-insensitive) across
+// all levels' publisher/creators/verifier/records[].username fields to
+// `targetUsername`. Returns the number of levels changed.
+export async function mergeLtclProfile(
+  levels: LtclLevel[],
+  handle: string,
+  targetUsername: string,
+): Promise<number> {
+  const h = handle.trim().toLowerCase()
+  const dst = targetUsername.trim()
+  if (!h || !dst) return 0
+
+  const batch = writeBatch(db)
+  let changed = 0
+  for (const lv of levels) {
+    const publisher = sameIdentity(lv.publisher, h) ? dst : lv.publisher
+    const verifier = sameIdentity(lv.verifier, h) ? dst : lv.verifier
+    const creators = lv.creators.map((c) => (sameIdentity(c, h) ? dst : c))
+    const records = lv.records.map((r) => (sameIdentity(r.username, h) ? { ...r, username: dst } : r))
+    const touched =
+      publisher !== lv.publisher ||
+      verifier !== lv.verifier ||
+      creators.some((c, i) => c !== lv.creators[i]) ||
+      records.some((r, i) => r.username !== lv.records[i].username)
+    if (touched) {
+      batch.set(doc(db, 'levels', String(lv.levelId)), { publisher, verifier, creators, records }, { merge: true })
+      changed++
+    }
+  }
+  if (changed > 0) await batch.commit()
+  return changed
+}
+
 // Placement first (nulls last, i.e. unranked at the bottom), then name.
 function byPlacement(a: LtclLevel, b: LtclLevel): number {
   const ap = a.placement ?? Number.POSITIVE_INFINITY

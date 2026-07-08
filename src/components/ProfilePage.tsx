@@ -6,6 +6,7 @@ import { db, storage } from '../firebase'
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { invalidateProfile } from '../userProfiles'
+import { useFileDrop } from '../useFileDrop'
 import { getRole } from '../roles'
 import type { CustomLink } from '../socials'
 import ProfilePosts from './ProfilePosts'
@@ -97,8 +98,7 @@ export default function ProfilePage() {
   // Owner-only editing controls are hidden while previewing as a visitor.
   const showOwnerControls = isOwner && !previewMode
 
-  async function handlePickPicture(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  async function uploadPicture(file: File | undefined) {
     if (!file || !profile) return
     setPicError('')
     const problem = await validateImage(file)
@@ -126,6 +126,8 @@ export default function ProfilePage() {
       if (fileRef.current) fileRef.current.value = ''
     }
   }
+
+  const { dragging: picDragging, dropProps: picDropProps } = useFileDrop(uploadPicture)
 
   async function handleSaveAbout() {
     if (!profile) return
@@ -185,16 +187,21 @@ export default function ProfilePage() {
         </div>
       )}
       <div className="bg-neutral-900 rounded-2xl p-6 flex flex-col items-center text-center">
-        <div className="relative">
+        <div className="relative" {...(showOwnerControls ? picDropProps : {})}>
           {profile.photoURL ? (
             <img
               src={profile.photoURL}
               alt={profile.username}
-              className="w-28 h-28 rounded-full object-cover ring-2 ring-neutral-700"
+              className={`w-28 h-28 rounded-full object-cover ring-2 transition-colors ${showOwnerControls && picDragging ? 'ring-violet-400' : 'ring-neutral-700'}`}
             />
           ) : (
-            <div className="w-28 h-28 rounded-full bg-neutral-800 ring-2 ring-neutral-700 flex items-center justify-center text-4xl text-neutral-500 font-semibold">
+            <div className={`w-28 h-28 rounded-full bg-neutral-800 ring-2 transition-colors flex items-center justify-center text-4xl text-neutral-500 font-semibold ${showOwnerControls && picDragging ? 'ring-violet-400' : 'ring-neutral-700'}`}>
               {profile.username.charAt(0).toUpperCase()}
+            </div>
+          )}
+          {showOwnerControls && picDragging && (
+            <div className="absolute inset-0 rounded-full bg-violet-950/50 border-2 border-dashed border-violet-400 flex items-center justify-center text-violet-200 text-xs pointer-events-none">
+              {t.new_post_drop_hint}
             </div>
           )}
           {showOwnerControls && (
@@ -210,7 +217,7 @@ export default function ProfilePage() {
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                onChange={handlePickPicture}
+                onChange={(e) => { uploadPicture(e.target.files?.[0]) }}
                 className="hidden"
               />
             </>

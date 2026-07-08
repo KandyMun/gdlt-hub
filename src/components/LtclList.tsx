@@ -18,9 +18,9 @@ function LevelBackdrop({ src }: { src: string }) {
         src={src}
         alt=""
         onLoad={() => setOk(true)}
-        className={`w-full h-full object-cover scale-110 blur-2xl transition-opacity duration-500 ${ok ? 'opacity-25' : 'opacity-0'}`}
+        className={`w-full h-full object-cover scale-105 transition-opacity duration-500 ${ok ? 'opacity-60' : 'opacity-0'}`}
       />
-      <div className="absolute inset-0 bg-neutral-950/70" />
+      <div className="absolute inset-0 bg-neutral-950/50" />
     </div>
   )
 }
@@ -224,7 +224,7 @@ export default function LtclList() {
       {current && <LevelBackdrop src={current.thumbnail || levelThumbnailUrl(current.levelId)} />}
       <div className="relative p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] gap-4">
       {/* Left: ranked list */}
-      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-3 flex flex-col gap-2">
+      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-3 flex flex-col gap-2">
         <input
           type="text"
           placeholder={t.ltcl_list_search}
@@ -267,7 +267,7 @@ export default function LtclList() {
       </div>
 
       {/* Center: selected level details */}
-      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-6">
+      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-6">
         {current ? (
           <LevelDetails level={current} rank={currentRank} />
         ) : (
@@ -276,7 +276,7 @@ export default function LtclList() {
       </div>
 
       {/* Right: records */}
-      <aside className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-sm p-4">
+      <aside className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-4">
         <h2 className="text-lg font-bold text-white mb-3">{t.ltcl_list_records}</h2>
         {current && current.records.length > 0 ? (
           <div className="flex flex-col gap-2">

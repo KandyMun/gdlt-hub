@@ -10,6 +10,15 @@ import {
   type GdStats as Stats,
 } from '../gd'
 import Spinner from './Spinner'
+import starIcon from '/gd_star.png'
+import moonIcon from '/gd_moon.png'
+import diamondIcon from '/gd_diamond.png'
+import userCoinIcon from '/gd_usercoin.png'
+import secretCoinIcon from '/gd_secretcoin.png'
+import demonIcon from '/gd_demon.png'
+import creatorPointIcon from '/gd_creatorpoint.png'
+import trophyIcon from '/gd_trophy.png'
+import backgroundImg from '/gd_background.jpg'
 
 type State =
   | { kind: 'idle' } // no gdUsername linked
@@ -20,11 +29,23 @@ type State =
 
 const fmt = (n: number) => n.toLocaleString('en-US')
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon }: { label: string; value: string; icon?: string }) {
   return (
-    <div className="bg-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
+    <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
+      {icon && <img src={icon} alt={label} title={label} className="w-5 h-5 mx-auto mb-1" />}
       <p className="text-white text-lg font-semibold leading-tight">{value}</p>
-      <p className="text-neutral-400 text-xs mt-1">{label}</p>
+      {!icon && <p className="text-neutral-400 text-xs mt-1">{label}</p>}
+    </div>
+  )
+}
+
+// Darkened GD background art, always shown behind the card (unlike the LTCL /
+// AREDL cards this isn't per-level — GD stats has one fixed backdrop image).
+function GdBackdrop() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <img src={backgroundImg} alt="" className="w-full h-full object-cover scale-105" />
+      <div className="absolute inset-0 bg-neutral-950/60" />
     </div>
   )
 }
@@ -178,77 +199,83 @@ export default function GdStats({
   }
 
   return (
-    <div className="bg-neutral-900 rounded-2xl p-6 mt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-neutral-300 font-medium">{t.gd_title}</h2>
-        {state.kind === 'loaded' && (
-          <div className="flex items-center gap-3">
-            {isOwner && !editing && (
-              <button
-                onClick={() => setEditing(true)}
-                title={t.gd_username_label}
-                className="text-neutral-500 hover:text-violet-400 text-sm transition-colors"
+    <div className="relative rounded-2xl overflow-hidden mt-4">
+      <GdBackdrop />
+      <div className="relative p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-neutral-300 font-medium">{t.gd_title}</h2>
+          {state.kind === 'loaded' && (
+            <div className="flex items-center gap-3">
+              {isOwner && !editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  title={t.gd_username_label}
+                  className="text-neutral-500 hover:text-violet-400 text-sm transition-colors"
+                >
+                  ✎
+                </button>
+              )}
+              <a
+                href={`https://gdbrowser.com/u/${encodeURIComponent(state.stats.accountId)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300 text-sm"
               >
-                ✎
-              </button>
-            )}
-            <a
-              href={`https://gdbrowser.com/u/${encodeURIComponent(state.stats.accountId)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-violet-400 hover:text-violet-300 text-sm"
-            >
-              {t.gd_view} ↗
-            </a>
-          </div>
-        )}
-      </div>
+                {t.gd_view} ↗
+              </a>
+            </div>
+          )}
+        </div>
 
-      {editing && isOwner ? (
-        <UsernameEditor
-          uid={uid}
-          discordUsername={discordUsername}
-          initial={gdUsername ?? ''}
-          onSaved={handleSaved}
-          onCancel={() => setEditing(false)}
-        />
-      ) : state.kind === 'idle' ? (
-        <UsernameEditor uid={uid} discordUsername={discordUsername} initial="" onSaved={handleSaved} />
-      ) : state.kind === 'loading' ? (
-        <div className="flex justify-center py-6"><Spinner /></div>
-      ) : state.kind === 'none' || state.kind === 'error' ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-neutral-500 text-sm">
-            {state.kind === 'none' ? t.gd_not_found(gdUsername ?? '') : t.gd_error_detail(state.message)}
-          </p>
+        {editing && isOwner ? (
           <UsernameEditor
             uid={uid}
             discordUsername={discordUsername}
             initial={gdUsername ?? ''}
             onSaved={handleSaved}
+            onCancel={() => setEditing(false)}
           />
-        </div>
-      ) : (
-        <>
-          <p className="text-white text-lg font-semibold mb-2">{state.stats.username}</p>
-          {state.auto && !state.verified && (
-            <p className="text-neutral-600 text-xs mb-2">{t.gd_auto_note}</p>
-          )}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Stat label={t.gd_stars} value={fmt(state.stats.stars)} />
-            <Stat label={t.gd_moons} value={fmt(state.stats.moons)} />
-            <Stat label={t.gd_secret_coins} value={fmt(state.stats.secretCoins)} />
-            <Stat label={t.gd_user_coins} value={fmt(state.stats.userCoins)} />
-            <Stat label={t.gd_demons} value={fmt(state.stats.demons)} />
-            <Stat label={t.gd_diamonds} value={fmt(state.stats.diamonds)} />
-            <Stat label={t.gd_creator_points} value={fmt(state.stats.creatorPoints)} />
-            <Stat
-              label={t.gd_global_rank}
-              value={state.stats.rank ? `#${fmt(state.stats.rank)}` : '—'}
+        ) : state.kind === 'idle' ? (
+          <UsernameEditor uid={uid} discordUsername={discordUsername} initial="" onSaved={handleSaved} />
+        ) : state.kind === 'loading' ? (
+          <div className="flex justify-center py-6"><Spinner /></div>
+        ) : state.kind === 'none' || state.kind === 'error' ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-neutral-500 text-sm">
+              {state.kind === 'none' ? t.gd_not_found(gdUsername ?? '') : t.gd_error_detail(state.message)}
+            </p>
+            <UsernameEditor
+              uid={uid}
+              discordUsername={discordUsername}
+              initial={gdUsername ?? ''}
+              onSaved={handleSaved}
             />
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center mb-2">
+              <p className="text-white text-lg font-semibold leading-tight">{state.stats.username}</p>
+              {state.auto && !state.verified && (
+                <p className="text-neutral-600 text-xs mt-1">{t.gd_auto_note}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <Stat label={t.gd_stars} value={fmt(state.stats.stars)} icon={starIcon} />
+              <Stat label={t.gd_moons} value={fmt(state.stats.moons)} icon={moonIcon} />
+              <Stat label={t.gd_secret_coins} value={fmt(state.stats.secretCoins)} icon={secretCoinIcon} />
+              <Stat label={t.gd_user_coins} value={fmt(state.stats.userCoins)} icon={userCoinIcon} />
+              <Stat label={t.gd_demons} value={fmt(state.stats.demons)} icon={demonIcon} />
+              <Stat label={t.gd_diamonds} value={fmt(state.stats.diamonds)} icon={diamondIcon} />
+              <Stat label={t.gd_creator_points} value={fmt(state.stats.creatorPoints)} icon={creatorPointIcon} />
+              <Stat
+                label={t.gd_global_rank}
+                value={state.stats.rank ? `#${fmt(state.stats.rank)}` : '—'}
+                icon={trophyIcon}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

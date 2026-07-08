@@ -6,42 +6,44 @@ import { levelThumbnailUrl } from '../aredl'
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
+    <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
       <p className="text-white text-lg font-semibold leading-tight">{value}</p>
       <p className="text-neutral-400 text-xs mt-1">{label}</p>
     </div>
   )
 }
 
+// Blurred, darkened backdrop of the hardest level's thumbnail — same treatment
+// as the level list's backdrop (LtclList.tsx). Fades in on load; shows nothing
+// on error so the plain card background shows through instead.
+function HardestBackdrop({ src }: { src: string }) {
+  const [ok, setOk] = useState(false)
+  useEffect(() => { setOk(false) }, [src])
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <img
+        src={src}
+        alt=""
+        onLoad={() => setOk(true)}
+        className={`w-full h-full object-cover scale-105 transition-opacity duration-500 ${ok ? 'opacity-60' : 'opacity-0'}`}
+      />
+      <div className="absolute inset-0 bg-neutral-950/50" />
+    </div>
+  )
+}
+
 function HardestBanner({ hardest }: { hardest: LtclLevel }) {
   const { t } = useI18n()
-  const [imgOk, setImgOk] = useState(false)
-  useEffect(() => { setImgOk(false) }, [hardest.levelId])
-
   return (
-    <div
-      className={`relative rounded-xl px-4 py-3 mb-2 overflow-hidden border border-violet-500/30 ${
-        imgOk ? '' : 'bg-gradient-to-r from-violet-600/25 to-fuchsia-600/10'
-      }`}
-    >
-      <img
-        src={levelThumbnailUrl(hardest.levelId)}
-        alt=""
-        aria-hidden="true"
-        onLoad={() => setImgOk(true)}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgOk ? 'opacity-100' : 'opacity-0'}`}
-      />
-      {imgOk && <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/85 via-neutral-950/40 to-transparent" />}
-      <div className="relative">
-        <p className="text-violet-200/90 text-[11px] font-semibold uppercase tracking-wider drop-shadow">
-          {t.ltcl_lb_hardest}
-        </p>
-        <div className="flex items-baseline justify-between gap-3 mt-1">
-          <span className="text-white text-xl font-bold truncate drop-shadow">{hardest.name}</span>
-          {hardest.placement != null && (
-            <span className="shrink-0 text-neutral-200 text-sm drop-shadow">#{hardest.placement}</span>
-          )}
-        </div>
+    <div className="rounded-xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] px-4 py-3">
+      <p className="text-violet-300/90 text-[11px] font-semibold uppercase tracking-wider">
+        {t.ltcl_lb_hardest}
+      </p>
+      <div className="flex items-baseline justify-between gap-3 mt-1">
+        <span className="text-white text-xl font-bold truncate">{hardest.name}</span>
+        {hardest.placement != null && (
+          <span className="shrink-0 text-neutral-200 text-sm">#{hardest.placement}</span>
+        )}
       </div>
     </div>
   )
@@ -64,24 +66,28 @@ export default function LtclStats({ username }: { username: string }) {
     (best, l) => (best === null || (l.placement ?? 1e9) < (best.placement ?? 1e9) ? l : best),
     null,
   )
+  const hardestSrc = hardest ? hardest.thumbnail || levelThumbnailUrl(hardest.levelId) : null
 
   return (
-    <div className="bg-neutral-900 rounded-2xl p-6 mt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-neutral-300 font-medium">{t.ltcl_stats_title}</h2>
-        <Link
-          to={`/ltcl/leaderboard/${entry.handle}`}
-          className="text-violet-400 hover:text-violet-300 text-sm"
-        >
-          {t.ltcl_stats_view} →
-        </Link>
-      </div>
+    <div className={`relative rounded-2xl overflow-hidden mt-4 ${hardestSrc ? '' : 'bg-neutral-900'}`}>
+      {hardestSrc && <HardestBackdrop src={hardestSrc} />}
+      <div className="relative p-6 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-neutral-300 font-medium">{t.ltcl_stats_title}</h2>
+          <Link
+            to={`/ltcl/leaderboard/${entry.handle}`}
+            className="text-violet-400 hover:text-violet-300 text-sm"
+          >
+            {t.ltcl_stats_view} →
+          </Link>
+        </div>
 
-      {hardest && <HardestBanner hardest={hardest} />}
+        {hardest && <HardestBanner hardest={hardest} />}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Stat label={t.ltcl_lb_rank} value={`#${idx + 1}`} />
-        <Stat label={t.ltcl_lb_points} value={String(entry.points)} />
+        <div className="grid grid-cols-2 gap-2">
+          <Stat label={t.ltcl_lb_rank} value={`#${idx + 1}`} />
+          <Stat label={t.ltcl_lb_points} value={String(entry.points)} />
+        </div>
       </div>
     </div>
   )

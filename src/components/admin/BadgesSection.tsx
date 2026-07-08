@@ -3,6 +3,7 @@ import { useAuth } from '../../AuthContext'
 import { useI18n } from '../../i18n'
 import { useBadges, createBadge, updateBadge, deleteBadge, countBadgeHolders, uploadBadgeAsset, type Badge } from '../../badges'
 import BadgePill from '../BadgePill'
+import { useFileDrop } from '../../useFileDrop'
 
 const EMPTY = { name: '', icon: '', color: '', background: '', hideName: false, date: '' }
 
@@ -95,6 +96,9 @@ export default function BadgesSection() {
     }
   }
 
+  const { dragging: iconDragging, dropProps: iconDropProps } = useFileDrop((f) => handleBadgeUpload('icon', f))
+  const { dragging: bgDragging, dropProps: bgDropProps } = useFileDrop((f) => handleBadgeUpload('background', f))
+
   // Badges with a background image render as large art tiles; plain ones render
   // as small pills — group them so the two visual styles don't mix in one row.
   const plain = badges.filter((b) => !b.background)
@@ -186,7 +190,7 @@ export default function BadgesSection() {
         />
       </div>
       <div className="flex flex-wrap gap-2 items-center">
-        <label className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded-lg cursor-pointer">
+        <label {...iconDropProps} className={`text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors ${iconDragging ? 'bg-violet-800/60 ring-2 ring-violet-400 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'}`}>
           {badgeUploading === 'icon' ? t.profile_uploading : t.users_badge_icon_upload}
           <input type="file" accept="image/*" className="hidden"
             onChange={(e) => { handleBadgeUpload('icon', e.target.files?.[0]); e.target.value = '' }} />
@@ -194,7 +198,7 @@ export default function BadgesSection() {
         {/^https?:\/\//.test(form.icon) && (
           <button onClick={() => setForm((s) => ({ ...s, icon: '' }))} className="text-xs text-neutral-400 hover:text-red-400" title={t.users_badge_remove_icon}>✕ {t.users_badge_icon_upload}</button>
         )}
-        <label className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded-lg cursor-pointer">
+        <label {...bgDropProps} className={`text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors ${bgDragging ? 'bg-violet-800/60 ring-2 ring-violet-400 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'}`}>
           {badgeUploading === 'background' ? t.profile_uploading : t.users_badge_bg_upload}
           <input type="file" accept="image/*" className="hidden"
             onChange={(e) => { handleBadgeUpload('background', e.target.files?.[0]); e.target.value = '' }} />

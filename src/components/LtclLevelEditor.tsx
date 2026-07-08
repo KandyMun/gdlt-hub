@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { collection, onSnapshot } from 'firebase/firestore'
+import { db } from '../firebase'
 import { useI18n } from '../i18n'
 import {
   type LtclLevel,
@@ -11,6 +13,7 @@ import {
   uploadLevelThumbnail,
 } from '../ltclLevels'
 import { useAuth } from '../AuthContext'
+import { useFileDrop } from '../useFileDrop'
 
 interface Props {
   level: LtclLevel | null // null = adding a new level
@@ -22,6 +25,76 @@ interface Props {
 // While editing, record fields are held as plain strings so partial input like
 // "7." types cleanly; they're parsed back to numbers on save.
 type EditRecord = { username: string; enjoyment: string; video: string }
+
+interface UserRow {
+  id: string
+  username: string
+  displayName?: string
+}
+
+// Record "username" is a plain Discord-username string (see ltclLevels.ts) —
+// this just helps type it in faster. Typing filters a dropdown of matching
+// site accounts; picking one fills in their raw username (the leaderboard /
+// profile link resolution elsewhere shows their chosen display name for it).
+// Nothing stops typing a name that matches no account, for players without a
+// site account — it's saved as plain text same as before.
+function UsernameField({
+  value,
+  onChange,
+  users,
+  placeholder,
+  className,
+}: {
+  value: string
+  onChange: (v: string) => void
+  users: UserRow[]
+  placeholder: string
+  className: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  const filtered = useMemo(() => {
+    const s = value.toLowerCase().trim()
+    const matches = s
+      ? users.filter((u) => u.username.toLowerCase().includes(s) || (u.displayName ?? '').toLowerCase().includes(s))
+      : users
+    return matches.slice(0, 8)
+  }, [users, value])
+
+  function pick(u: UserRow) {
+    onChange(u.username)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative min-w-0">
+      <input
+        className={className}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute left-0 right-0 mt-1 z-50 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+          {filtered.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              // Fires before the input's onBlur closes the dropdown.
+              onMouseDown={(e) => { e.preventDefault(); pick(u) }}
+              className="flex items-center gap-1.5 w-full text-left text-sm px-3 py-1.5 text-neutral-200 hover:bg-neutral-800 truncate"
+            >
+              <span className="truncate">{u.displayName || u.username}</span>
+              <span className="text-neutral-500 text-xs shrink-0">@{u.username}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const blank: LtclLevel = {
   levelId: 0,
@@ -73,6 +146,13 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
   const [thumbnail, setThumbnail] = useState(base.thumbnail ?? '')
   const [thumbUploading, setThumbUploading] = useState(false)
 
+  const [users, setUsers] = useState<UserRow[]>([])
+  useEffect(() => {
+    return onSnapshot(collection(db, 'users'), (snap) => {
+      setUsers(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<UserRow, 'id'>) })))
+    })
+  }, [])
+
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -91,6 +171,8 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
       setThumbUploading(false)
     }
   }
+
+  const { dragging: thumbDragging, dropProps: thumbDropProps } = useFileDrop(handleThumbUpload)
 
   const placementNum = Math.max(1, Number(placement) || 1)
   const previewPoints = pointsForPlacement(placementNum)
@@ -262,12 +344,12 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
           {!metaLocked && (
             <div className="flex flex-col gap-1">
               <label className={labelCls}>{t.ltcl_edit_thumbnail}</label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3" {...thumbDropProps}>
                 {thumbnail && (
-                  <img src={thumbnail} alt="" className="w-24 h-14 object-cover rounded-md border border-neutral-700" />
+                  <img src={thumbnail} alt="" className={`w-24 h-14 object-cover rounded-md border transition-colors ${thumbDragging ? 'border-violet-400' : 'border-neutral-700'}`} />
                 )}
-                <label className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded-lg cursor-pointer">
-                  {thumbUploading ? t.profile_uploading : t.ltcl_edit_thumb_upload}
+                <label className={`text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors ${thumbDragging ? 'bg-violet-800/60 ring-2 ring-violet-400 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'}`}>
+                  {thumbUploading ? t.profile_uploading : thumbDragging ? t.new_post_drop_hint : t.ltcl_edit_thumb_upload}
                   <input type="file" accept="image/*" className="hidden"
                     onChange={(e) => { handleThumbUpload(e.target.files?.[0]); e.target.value = '' }} />
                 </label>
@@ -302,11 +384,12 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
             )}
             {records.map((r, i) => (
               <div key={i} className="grid grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)_1.25rem] gap-2 items-center">
-                <input
+                <UsernameField
                   className={`${inputCls} min-w-0`}
                   placeholder={t.ltcl_edit_username}
                   value={r.username}
-                  onChange={(e) => setRecord(i, { username: e.target.value })}
+                  onChange={(v) => setRecord(i, { username: v })}
+                  users={users}
                 />
                 {/* Enjoyment is editable by list admins and moderators. */}
                 <input

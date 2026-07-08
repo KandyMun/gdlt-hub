@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.2] - 2026-07-08
+
+### Added
+- Drag and drop uploads — every file upload now accepts a dropped image: the profile picture, badge icon and background (admin), and the level thumbnail, each highlighting as you drag over. Clicking to browse still works.
+- GD stats now show icons (star, moon, diamond, user coin, secret coin, demon, creator points) instead of text labels; global rank is marked with a trophy icon.
+- New "Merge profiles" tab in the LTCL admin panel — list admins can link an LTCL leaderboard name (which needs no account) to a real gdlt-hub account; every occurrence of that name across the level list is rewritten to the account's username, so it resolves to the right profile and display name everywhere.
+- Adding an LTCL record now autofills from existing site accounts as you type, while still allowing a name to be typed by hand for players without an account.
+
+### Changed
+- The LTCL stats card on a profile now shows the hardest level's custom uploaded thumbnail when one exists, falling back to the automatic thumbnail (by level ID) as before.
+- The LTCL and AREDL profile stats cards now use the same segmented, frosted-glass layout as the List page, with the hardest level/demon's thumbnail as a blurred card background.
+- The GD stats card now has a fixed background image, and the linked username is shown in its own centered segment.
+
+### Fixed
+- The level thumbnail backdrop on the List page is no longer heavily blurred — it now shows sharp and clearly recognizable behind the page. Section panels keep a lighter frosted-glass effect.
+
 ## [v0.5.1] - 2026-07-08
 
 ### Added
