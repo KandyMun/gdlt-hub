@@ -16,7 +16,7 @@ const rankOf = (n: number | null) => (n ? `#${fmt(n)}` : '—')
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
+    <div className="bg-neutral-900/40 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
       <p className="text-white text-lg font-semibold leading-tight">{value}</p>
       <p className="text-neutral-400 text-xs mt-1">{label}</p>
     </div>
@@ -38,7 +38,7 @@ function RankBlock({
   demonsLabel: string
 }) {
   return (
-    <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5">
+    <div className="bg-neutral-900/40 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5">
       <p className="text-neutral-400 text-xs mb-1.5">{title}</p>
       <div className="flex justify-between text-sm">
         <span className="text-neutral-500">{pointsLabel}</span>

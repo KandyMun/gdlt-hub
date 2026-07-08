@@ -16,6 +16,7 @@ export interface Bounty {
   id: string
   levelName: string
   levelId: number | null // optional in-game level id, used for a thumbnail
+  aredlUrl: string | null // optional AREDL (or other list) link for the level
   amount: number // EUR
   description: string
   posterId: string
@@ -31,6 +32,7 @@ export interface Bounty {
 export interface BountyInput {
   levelName: string
   levelId: number | null
+  aredlUrl: string | null
   amount: number
   description: string
 }
@@ -38,9 +40,12 @@ export interface BountyInput {
 function cleanInput(input: BountyInput) {
   if (!input.levelName.trim()) throw new Error('name')
   if (!(input.amount >= BOUNTY_MIN_AMOUNT)) throw new Error('amount')
+  const aredlUrl = input.aredlUrl?.trim() || null
+  if (aredlUrl && !/^https?:\/\//i.test(aredlUrl)) throw new Error('aredlUrl')
   return {
     levelName: input.levelName.trim(),
     levelId: input.levelId,
+    aredlUrl,
     amount: input.amount,
     description: input.description.trim(),
   }

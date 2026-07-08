@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.4] - 2026-07-08
+
+### Added
+- Bounty Board "Top patrons" leaderboard — ranks posters by how much money they've actually given out, summing their completed (paid-out) bounties.
+- Bounties now have an optional AREDL link field, shown as a "View on AREDL" link on the bounty card — for an extreme demon or any other level. Non-AREDL links show as "View more info" instead.
+- LTCL profile pages can now set a custom background: when viewing your own page, pick any level you've completed or verified (with a search box) to use as the page's backdrop, or leave it on "Auto (hardest challenge)".
+
+### Changed
+- LTCL profile pages now use the same sectioned, frosted-glass layout as the Level list, with the chosen (or hardest) level's thumbnail as a full-screen backdrop.
+
+### Fixed
+- LTCL points: the verifier of a level now earns its points, just like completing it (counted once if they also hold a record on it).
+- Verified levels now count as "beaten" everywhere the hardest challenge is shown — the LTCL leaderboard, a player's LTCL page, and the gdlt-hub profile card.
+- The level thumbnail background on the Level list now fills the entire screen top to bottom and zooms in slightly so it covers all sides instead of only left-to-right.
+
 ## [v0.5.3] - 2026-07-08
 
 ### Added

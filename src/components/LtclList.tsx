@@ -13,12 +13,12 @@ function LevelBackdrop({ src }: { src: string }) {
   const [ok, setOk] = useState(false)
   useEffect(() => { setOk(false) }, [src])
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
       <img
         src={src}
         alt=""
         onLoad={() => setOk(true)}
-        className={`w-full h-full object-cover scale-105 transition-opacity duration-500 ${ok ? 'opacity-60' : 'opacity-0'}`}
+        className={`w-full h-full object-cover scale-125 transition-opacity duration-500 ${ok ? 'opacity-60' : 'opacity-0'}`}
       />
       <div className="absolute inset-0 bg-neutral-950/50" />
     </div>
@@ -224,7 +224,7 @@ export default function LtclList() {
   return (
     <div className="relative">
       {current && <LevelBackdrop src={current.thumbnail || levelThumbnailUrl(current.levelId)} />}
-      <div className="relative p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] gap-4">
+      <div className="relative z-10 p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] gap-4">
       {/* Left: ranked list */}
       <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-3 flex flex-col gap-2">
         <input

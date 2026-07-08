@@ -16,6 +16,7 @@ export default function NewBountyModal({ onClose, bounty }: Props) {
   const editing = !!bounty
   const [levelName, setLevelName] = useState(bounty?.levelName ?? '')
   const [levelId, setLevelId] = useState(bounty?.levelId != null ? String(bounty.levelId) : '')
+  const [aredlUrl, setAredlUrl] = useState(bounty?.aredlUrl ?? '')
   const [amount, setAmount] = useState(bounty ? String(bounty.amount) : '')
   const [description, setDescription] = useState(bounty?.description ?? '')
   const [loading, setLoading] = useState(false)
@@ -35,10 +36,15 @@ export default function NewBountyModal({ onClose, bounty }: Props) {
       setError(t.bounty_form_err_amount)
       return
     }
+    if (aredlUrl.trim() && !/^https?:\/\//i.test(aredlUrl.trim())) {
+      setError(t.bounty_form_err_aredl)
+      return
+    }
 
     const input = {
       levelName,
       levelId: levelId.trim() ? Number(levelId) : null,
+      aredlUrl: aredlUrl.trim() || null,
       amount: amountNum,
       description,
     }
@@ -90,6 +96,19 @@ export default function NewBountyModal({ onClose, bounty }: Props) {
               onChange={(e) => setLevelId(e.target.value)}
               className="bg-neutral-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-500"
             />
+          </label>
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-neutral-400">{t.bounty_form_aredl}</span>
+            <input
+              type="url"
+              inputMode="url"
+              placeholder={t.bounty_form_aredl_placeholder}
+              value={aredlUrl}
+              onChange={(e) => setAredlUrl(e.target.value)}
+              className="bg-neutral-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-500"
+            />
+            <span className="text-neutral-500 text-xs">{t.bounty_form_aredl_hint}</span>
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">

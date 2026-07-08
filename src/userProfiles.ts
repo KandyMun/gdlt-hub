@@ -10,6 +10,7 @@ export interface PublicProfile {
   about?: string
   socials?: Record<string, string>
   customLinks?: { label: string; url: string }[]
+  ltclBackgroundLevelId?: number | null // chosen LTCL profile background level
 }
 
 // Module-level caches so the feed doesn't refetch the same author repeatedly.

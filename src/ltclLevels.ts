@@ -87,8 +87,10 @@ export interface LbEntry {
   verified: LtclLevel[]
 }
 
-// Aggregate players from the level data. Points come from completed challenges
-// (records); created/verified are tracked separately. Sorted by points desc.
+// Aggregate players from the level data. Points come from challenges a player
+// has beaten — either as a record holder or as the level's verifier (the
+// verifier is the first person to complete it). Created levels are tracked
+// separately and score nothing. Sorted by points desc.
 export function buildLeaderboard(levels: LtclLevel[]): LbEntry[] {
   const map = new Map<string, LbEntry>()
   const get = (name: string) => {
@@ -104,7 +106,12 @@ export function buildLeaderboard(levels: LtclLevel[]): LbEntry[] {
   }
   const byName = (a: LtclLevel, b: LtclLevel) => a.name.localeCompare(b.name)
   for (const e of map.values()) {
-    e.points = Math.round(e.completed.reduce((a, l) => a + (l.points ?? 0), 0) * 100) / 100
+    // Points count each beaten level once, whether it was completed (record)
+    // or verified — so a verifier who also holds a record isn't double-scored.
+    const scored = new Map<number, LtclLevel>()
+    for (const l of e.completed) scored.set(l.levelId, l)
+    for (const l of e.verified) scored.set(l.levelId, l)
+    e.points = Math.round([...scored.values()].reduce((a, l) => a + (l.points ?? 0), 0) * 100) / 100
     // Displayed alphabetically; "hardest" is derived by placement separately.
     e.completed.sort(byName)
     e.created.sort(byName)

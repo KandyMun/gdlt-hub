@@ -103,7 +103,7 @@ service cloud.firestore {
                     && (
                       (resource.data.posterId == request.auth.uid
                         && resource.data.status == 'open'
-                        && changedOnly(['levelName', 'levelId', 'amount', 'description'])
+                        && changedOnly(['levelName', 'levelId', 'aredlUrl', 'amount', 'description'])
                         && request.resource.data.amount is number
                         && request.resource.data.amount >= 2)
                       || isBountyManager()

@@ -6,7 +6,7 @@ import { levelThumbnailUrl } from '../aredl'
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-neutral-900/30 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
+    <div className="bg-neutral-900/40 backdrop-blur-[7px] border border-neutral-800/60 rounded-xl px-3 py-2.5 text-center">
       <p className="text-white text-lg font-semibold leading-tight">{value}</p>
       <p className="text-neutral-400 text-xs mt-1">{label}</p>
     </div>
@@ -62,7 +62,9 @@ export default function LtclStats({ username }: { username: string }) {
   if (idx === -1) return null
 
   const entry = board[idx]
-  const hardest = entry.completed.reduce<LtclLevel | null>(
+  // Hardest = the top-placed level the player has beaten, counting verified
+  // levels too (the verifier is the first to clear it).
+  const hardest = [...entry.completed, ...entry.verified].reduce<LtclLevel | null>(
     (best, l) => (best === null || (l.placement ?? 1e9) < (best.placement ?? 1e9) ? l : best),
     null,
   )

@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.4] - 2026-07-08
+
+### Pridėta
+- Premijų lentos „Daugiausiai išdavę" lyderių lentelė — skelbėjai rikiuojami pagal tai, kiek pinigų iš tikrųjų išdalino, sumuojant jų įvykdytas (apmokėtas) premijas.
+- Premijos dabar turi nebūtiną AREDL nuorodos lauką, rodomą kaip „Žiūrėti AREDL" nuoroda premijos kortelėje — extreme demon ar bet kokiam kitam lygiui. Ne AREDL nuorodos rodomos kaip „Daugiau informacijos".
+- LTCL profilio puslapiuose dabar galima nustatyti savo foną: žiūrint savo puslapį, pasirink bet kurį įveiktą ar patvirtintą lygį (su paieška) kaip puslapio foną arba palik „Automatinį (sunkiausias lygis)".
+
+### Pakeista
+- LTCL profilio puslapiai dabar naudoja tą patį suskirstytą, matinio stiklo išdėstymą kaip Sąrašo puslapis, su pasirinkto (ar sunkiausio) lygio miniatiūra kaip viso ekrano fonu.
+
+### Pataisyta
+- Lygio miniatiūros fonas Sąrašo puslapyje dabar užpildo visą ekraną nuo viršaus iki apačios ir šiek tiek priartinamas, kad dengtų iš visų pusių, o ne tik iš kairės į dešinę.
+- LTCL taškai: lygį patvirtinęs žaidėjas dabar gauna jo taškus, kaip ir jį įveikęs.
+- Patvirtinti lygiai dabar visur laikomi „įveiktais" rodant sunkiausią lygį — LTCL lyderių lentelėje, žaidėjo LTCL puslapyje ir gdlt-hub profilio kortelėje.
+
 ## [v0.5.3] - 2026-07-08
 
 ### Pridėta

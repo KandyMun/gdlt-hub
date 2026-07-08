@@ -82,6 +82,16 @@ function BountyCard({
             {bounty.levelId != null && (
               <p className="text-neutral-500 text-xs">{t.bounty_level_id(bounty.levelId)}</p>
             )}
+            {bounty.aredlUrl && (
+              <a
+                href={bounty.aredlUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300 text-xs inline-flex items-center gap-1"
+              >
+                {/aredl\.net/i.test(bounty.aredlUrl) ? t.bounty_aredl_link : t.bounty_info_link} ↗
+              </a>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <StatusBadge status={bounty.status} />
@@ -163,6 +173,37 @@ function BountyCard({
   )
 }
 
+interface PatronEntry {
+  posterId: string
+  username: string
+  total: number
+  count: number
+}
+
+// The leaderboard ranks posters by how much money they've actually given out —
+// i.e. the sum of their completed (confirmed-paid) bounties.
+function PatronsLeaderboard({ patrons }: { patrons: PatronEntry[] }) {
+  const { t } = useI18n()
+  const medals = ['🥇', '🥈', '🥉']
+  return (
+    <div className="flex flex-col gap-3">
+      <h2 className="text-neutral-400 text-sm font-semibold uppercase tracking-wide">{t.bounty_leaderboard_title}</h2>
+      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/40 divide-y divide-neutral-800/60">
+        {patrons.map((p, i) => (
+          <div key={p.posterId} className="flex items-center gap-3 px-4 py-2.5">
+            <span className="w-6 text-center text-sm font-semibold text-neutral-400 shrink-0">
+              {medals[i] ?? i + 1}
+            </span>
+            <AuthorLink handle={p.username} avatarSize={20} className="flex items-center gap-1.5 min-w-0 hover:text-violet-400 text-sm text-neutral-200" />
+            <span className="ml-auto text-neutral-500 text-xs shrink-0">{t.bounty_leaderboard_count(p.count)}</span>
+            <span className="text-amber-300 font-bold text-sm shrink-0 w-16 text-right">{t.bounty_amount(p.total)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function BountyBoardPage() {
   const { user } = useAuth()
   const { t } = useI18n()
@@ -176,6 +217,23 @@ export default function BountyBoardPage() {
 
   const open = useMemo(() => bounties.filter((b) => b.status === 'open'), [bounties])
   const completed = useMemo(() => bounties.filter((b) => b.status === 'completed'), [bounties])
+
+  // Rank posters by total money given out on completed (paid-out) bounties.
+  const patrons = useMemo(() => {
+    const byPoster = new Map<string, PatronEntry>()
+    for (const b of completed) {
+      const entry = byPoster.get(b.posterId) ?? {
+        posterId: b.posterId,
+        username: b.posterUsername,
+        total: 0,
+        count: 0,
+      }
+      entry.total += b.amount
+      entry.count += 1
+      byPoster.set(b.posterId, entry)
+    }
+    return [...byPoster.values()].sort((a, b) => b.total - a.total)
+  }, [completed])
 
   if (!loaded) return <div className="flex justify-center py-20"><Spinner /></div>
 
@@ -202,6 +260,8 @@ export default function BountyBoardPage() {
         <p className="text-neutral-500 text-center py-20">{t.bounty_empty}</p>
       ) : (
         <>
+          {patrons.length > 0 && <PatronsLeaderboard patrons={patrons} />}
+
           {open.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-neutral-400 text-sm font-semibold uppercase tracking-wide">{t.bounty_open_title}</h2>
