@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.5.6] - 2026-07-10
+
+### Pridėta
+- Dienos žinutė (MOTD) — kiekvieną dieną atsitiktinai parenkama viena žinutė ir kaip perdanga rodoma po antrašte visuose puslapiuose (įskaitant pagrindinį), kas 30–60 s praslenkanti per ekraną per 15 s. Parinkta žinutė visą dieną nesikeičia (neatsinaujina perkraunant). Parinkus kitos dienos žinutę, ankstesnė ištrinama, tad kiekviena rodoma tik vieną dieną; kai žinučių nėra, niekas nerodoma.
+- Nauja „Dienos žinutės vadovo" rolė — administravimo skydelyje gauna tik „Dienos žinutė" skirtuką, kuriame gali pridėti žinutes į sąrašą ir jas trinti. Kitos skydelio dalys jam nepasiekiamos.
+- „Dienos žinutė" skirtuke žinutės rodomos abėcėlės tvarka, o dabar rodoma žinutė iškeliama į viršų ir paryškinama. Mygtukas „Sukti per naują" leidžia iškart pasukti — ištrinti dabartinę žinutę ir atsitiktinai parinkti naują, iš naujo paleidžiant laikmatį.
+
 ## [v0.5.5] - 2026-07-10
 
 ### Pridėta

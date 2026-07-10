@@ -21,6 +21,24 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* Message-of-the-day banner: a message scrolls once across the screen, right to
+   left, taking 15s to pass. `forwards` parks it off-screen afterwards so nothing
+   shows during the gap until the next message is selected. */
+@keyframes motd-scroll {
+  from {
+    transform: translateX(100vw);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.motd-scroll {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  animation: motd-scroll 15s linear forwards;
+}
+
 /* Profile social icons: neutral by default, brand color (from --brand) on hover. */
 .social-icon {
   color: #a3a3a3;

@@ -15,6 +15,7 @@ export type Capability =
   | 'assign_roles' // grant / remove roles on users
   | 'manage_site' // site-wide admin (freeze, posts, users, bans)
   | 'manage_bounties' // confirm/reopen bounties on the Bounty Board
+  | 'manage_motd' // add / remove message-of-the-day entries
 
 // Roles that grant blanket access to everything.
 export const SUPER_ROLES = ['administrator']
@@ -24,6 +25,7 @@ const ROLE_CAPS: Record<string, Capability[]> = {
   'list-admin': ['manage_levels', 'manage_records', 'edit_rules'],
   'list-moderator': ['manage_records'],
   'bounty-board-manager': ['manage_bounties'],
+  'motd-manager': ['manage_motd'],
 }
 
 const ALL_CAPS: Capability[] = [
@@ -33,6 +35,7 @@ const ALL_CAPS: Capability[] = [
   'assign_roles',
   'manage_site',
   'manage_bounties',
+  'manage_motd',
 ]
 
 // Resolve a set of role ids to the capabilities they grant.

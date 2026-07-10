@@ -15,6 +15,7 @@ import Avatar from './Avatar'
 import FreepostNav from './FreepostNav'
 import LtclNav from './LtclNav'
 import HomeNav from './HomeNav'
+import MotdBanner from './MotdBanner'
 import VERSION from '../version'
 
 // The shared top bar for the whole hub: logo, a page-specific middle slot,
@@ -24,6 +25,7 @@ export default function Layout() {
   const { user, profile } = useAuth()
   const isAdmin = useIsAdmin()
   const canManageSite = useCan('manage_site')
+  const canManageMotd = useCan('manage_motd')
   const { frozen } = useSiteConfig()
   const { t, locale, setLocale } = useI18n()
   const navigate = useNavigate()
@@ -111,7 +113,7 @@ export default function Layout() {
                     >
                       {t.nav_myposts}
                     </button>
-                    {canManageSite && (
+                    {(canManageSite || canManageMotd) && (
                       <button
                         onClick={() => { setMenuOpen(false); navigate('/admin') }}
                         className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"
@@ -139,6 +141,8 @@ export default function Layout() {
           )}
         </div>
       </header>
+
+      <MotdBanner />
 
       {!onHome && (
         <div className="px-4 pt-3 flex justify-start">

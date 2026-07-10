@@ -48,7 +48,29 @@ service cloud.firestore {
     match /config/{doc} {
       allow read: if true;
       // Rules text is editable by list staff; other config stays admin-only.
-      allow write: if isAdmin() || (doc == 'ltclRules' && hasRole('list-admin'));
+      // config/motd holds the currently-selected message-of-the-day; any
+      // signed-in visitor's client may advance the rotation (pick the next
+      // message + record when to rotate again), so it's writable by anyone
+      // logged in. It only ever stores a denormalized banner string.
+      allow write: if isAdmin()
+                   || (doc == 'ltclRules' && hasRole('list-admin'))
+                   || (doc == 'motd' && isSignedIn());
+    }
+
+    // Message of the day. The motd-manager role (or admin) curates the pool of
+    // messages. Anyone can read them. Deletion is open to any signed-in user
+    // because the banner rotation consumes a message when it moves on to the
+    // next one (so a shown message never gets picked again) — that consumption
+    // runs from ordinary visitors' clients, not just the manager's.
+    function isMotdManager() { return isAdmin() || hasRole('motd-manager'); }
+
+    match /motd/{id} {
+      allow read: if true;
+      allow create, update: if isMotdManager()
+                            && request.resource.data.text is string
+                            && request.resource.data.text.size() > 0
+                            && request.resource.data.text.size() <= 200;
+      allow delete: if isSignedIn();
     }
 
     match /users/{uid} {

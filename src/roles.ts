@@ -19,6 +19,7 @@ export const ROLES: Role[] = [
   { id: 'bounty-board-manager', label: { en: 'Bounty Board Manager', lt: 'Premijų lentos vadovas' }, badge: 'bg-amber-500/15 text-amber-300 border-amber-500/40', icon: '💰' },
   { id: 'achievement-board-manager', label: { en: 'Achievement Board Manager', lt: 'Pasiekimų lentos vadovas' }, badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40', icon: '🏅' },
   { id: 'achievement-announcement-manager', label: { en: 'Achievement Announcement Manager', lt: 'Pasiekimų skelbimų vadovas' }, badge: 'bg-teal-500/15 text-teal-300 border-teal-500/40', icon: '📣' },
+  { id: 'motd-manager', label: { en: 'MOTD Manager', lt: 'Dienos žinutės vadovas' }, badge: 'bg-orange-500/15 text-orange-300 border-orange-500/40', icon: '📢' },
 ]
 
 const roleMap: Record<string, Role> = Object.fromEntries(ROLES.map((r) => [r.id, r]))

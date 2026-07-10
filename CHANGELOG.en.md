@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.5.6] - 2026-07-10
+
+### Added
+- Message of the day (MOTD) — one random message is picked per day and shown as an overlay below the header on every page (including the home page), scrolling across the screen every 30–60s and taking 15s to pass. The chosen message stays the same all day (it doesn't re-roll on refresh). When the next day's message is picked the previous one is deleted, so each shows for a single day; when there are no messages nothing is rendered.
+- New "MOTD Manager" role — in the admin control panel it gets only the "MOTD" tab, where it can add messages to the list and remove them. The rest of the panel stays out of reach.
+- The "MOTD" tab lists messages alphabetically, with the one showing now pulled to the top and highlighted. A "Reroll" button forces an immediate roll — deleting the current message and picking a new one at random, resetting the timer.
+
 ## [v0.5.5] - 2026-07-10
 
 ### Added
