@@ -1,3 +1,15 @@
+// Lithuanian plural selector (CLDR one/few/other) for "N <noun>" phrases:
+//   one  — n ends in 1 but not 11        (1, 21, 31, 101 …)      → "bandymas"
+//   few  — n ends in 2–9 but not 12–19   (2–9, 22–29, 102–109 …) → "bandymai"
+//   other— everything else (0, 10–20, tens, hundreds …)         → "bandymų"
+function plural(n: number, one: string, few: string, other: string): string {
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return one
+  if (m10 >= 2 && m10 <= 9 && (m100 < 11 || m100 > 19)) return few
+  return other
+}
+
 const lt = {
   // Nav
   nav_feed: 'Srautas',
@@ -22,6 +34,72 @@ const lt = {
   home_changelog_title: 'Naujausi pakeitimai',
   home_changelog_view_all: 'Visas žurnalas',
   home_changelog_more: (n: number) => `+${n} daugiau`,
+  home_achievements_desc: 'Didžiausi Lietuvos Geometry Dash pasiekimai — sunkiausi demonai, challenge\'ai ir geriausi žaidėjai.',
+  home_demon_desc: 'Sunkiausio Lietuvos extreme demono istorija.',
+
+  // Hub pages (achievements + hardest demon)
+  achievements_title: 'Pasiekimai',
+  achievements_subtitle: 'Top 10 sunkiausių GD Lietuvos pasiekimų.',
+  achievements_empty: 'Kol kas pasiekimų nėra.',
+  achievements_by: 'Autorius:',
+  demon_title: 'Sunkiausias demonas',
+  demon_subtitle: 'Sunkiausio Lietuvos extreme demono istorija.',
+  demon_empty: 'Kol kas įrašų nėra.',
+  demon_current: 'Dabartinis',
+  demon_verified_by: 'Įveikė:',
+
+  // Person reference picker (shared)
+  person_name_placeholder: 'Vardas (tekstas)',
+  person_link_user: 'Susieti vartotoją',
+  person_unlink: 'Atsieti vartotoją',
+  person_search: 'Ieškoti vartotojų…',
+  person_no_match: 'Nėra atitikmenų',
+  people_label: 'Žmonės (vardas + bandymai)',
+  people_add: 'Pridėti žmogų',
+  people_remove: 'Pašalinti žmogų',
+  people_attempts_placeholder: 'Bandymai (tik skaičius)',
+  people_attempts_suffix: (n: number) => plural(n, 'bandymas', 'bandymai', 'bandymų'),
+  hub_move_up: 'Aukštyn',
+  hub_move_down: 'Žemyn',
+  hub_move_left: 'Kairėn',
+  hub_move_right: 'Dešinėn',
+  hub_edit: 'Redaguoti',
+  hub_done: 'Baigti',
+  carousel_go_to_page: (n: number) => `Eiti į puslapį ${n}`,
+
+  // List management (admin-managed "top 10" list tabs)
+  achievements_untitled_list: 'Sąrašas be pavadinimo',
+  list_none: 'Kol kas sąrašų nėra.',
+  list_new: 'Naujas sąrašas',
+  list_name_placeholder: 'Sąrašo pavadinimas',
+  list_create: 'Sukurti',
+  list_manage: 'Sąrašas:',
+  list_rename: 'Pervadinti',
+  list_delete: 'Ištrinti sąrašą',
+  list_delete_confirm: (name: string, count: number) => `Ištrinti sąrašą „${name}“ ir jo ${count} ${plural(count, 'įrašą', 'įrašus', 'įrašų')}? Šio veiksmo atšaukti negalima.`,
+  list_save: 'Išsaugoti',
+  list_cancel: 'Atšaukti',
+
+  // Achievements editing (inline, on the page)
+  achievements_add_entry: 'Pridėti įrašą',
+  achievements_field_title: 'Pavadinimas',
+  achievements_field_link: 'Lygio nuoroda (URL, kurį atidaro pavadinimas, nebūtina)',
+  achievements_add: 'Pridėti',
+  achievements_save: 'Išsaugoti',
+  achievements_cancel: 'Atšaukti',
+  achievements_edit: 'Redaguoti',
+  achievements_delete: 'Ištrinti',
+
+  // Hardest demon editing (inline, on the page)
+  demon_add_entry: 'Pridėti įrašą',
+  demon_field_level: 'Lygio pavadinimas',
+  demon_field_date: 'Data',
+  demon_field_note: 'Pastabos (nebūtina, palaiko markdown)',
+  demon_add: 'Pridėti',
+  demon_save: 'Išsaugoti',
+  demon_cancel: 'Atšaukti',
+  demon_edit: 'Redaguoti',
+  demon_delete: 'Ištrinti',
 
   // LTCL
   ltcl_title: 'Lietuvos iššūkių sąrašas',
@@ -70,8 +148,8 @@ const lt = {
   ltcl_admin_levels: 'Lygiai',
   ltcl_admin_rules: 'Taisyklės',
   ltcl_admin_merge: 'Sujungti profilius',
-  ltcl_admin_count: (n: number) => `${n} lyg${n === 1 ? 'is' : 'ių'}`,
-  ltcl_admin_recs: (n: number) => `${n} įraš${n === 1 ? 'as' : 'ai'}`,
+  ltcl_admin_count: (n: number) => `${n} ${plural(n, 'lygis', 'lygiai', 'lygių')}`,
+  ltcl_admin_recs: (n: number) => `${n} ${plural(n, 'įrašas', 'įrašai', 'įrašų')}`,
   ltcl_admin_rules_hint: 'Taisyklės naudoja Markdown. Formatuokite tekstą įrankių juosta; tiesioginė peržiūra rodo, kaip tiksliai atrodys.',
   ltcl_fmt_heading: 'Antraštė',
   ltcl_fmt_bold: 'Paryškinta',
@@ -142,7 +220,7 @@ const lt = {
   // Pakeliai
   pack_pts: 'tšk.',
   pack_points_label: (n: number) => `${n} tšk.`,
-  pack_level_count: (n: number) => `${n} lyg${n === 1 ? 'is' : 'ių'}`,
+  pack_level_count: (n: number) => `${n} ${plural(n, 'lygis', 'lygiai', 'lygių')}`,
   pack_completed_count: (done: number, total: number) => `Įveikta ${done}/${total} lygių`,
   pack_no_levels: 'Šiame pakelyje kol kas nėra lygių.',
   pack_beaten: 'Įveikta',
@@ -150,7 +228,7 @@ const lt = {
   pack_none_found: 'Pakelių nerasta.',
   ltcl_admin_packs: 'Pakeliai',
   pack_admin_add: 'Pridėti pakelį',
-  pack_admin_count: (n: number) => `${n} pakel${n === 1 ? 'is' : 'ių'}`,
+  pack_admin_count: (n: number) => `${n} ${plural(n, 'pakelis', 'pakeliai', 'pakelių')}`,
   pack_edit_add_title: 'Pridėti pakelį',
   pack_edit_edit_title: 'Redaguoti pakelį',
   pack_edit_name: 'Pakelio pavadinimas',
@@ -166,7 +244,7 @@ const lt = {
   pack_edit_selected_count: (n: number, min: number) => `pasirinkta ${n} (min. ${min})`,
   pack_edit_name_required: 'Reikalingas pakelio pavadinimas.',
   pack_edit_name_taken: 'Pakelis tokiu pavadinimu jau egzistuoja.',
-  pack_edit_min_levels: (n: number) => `Pakelyje turi būti bent ${n} lygiai.`,
+  pack_edit_min_levels: (n: number) => `Pakelyje turi būti bent ${n} ${plural(n, 'lygis', 'lygiai', 'lygių')}.`,
   pack_edit_delete: 'Ištrinti pakelį',
   pack_edit_confirm_delete: 'Visam laikui ištrinti šį pakelį?',
 
@@ -339,7 +417,7 @@ const lt = {
   users_active_desc: 'Visi vartotojai gali skelbti, komentuoti ir reaguoti.',
   users_unfreeze: 'Atšaldyti',
   users_freeze: 'Užšaldyti svetainę',
-  users_count: (n: number) => `${n} paskyra${n === 1 ? '' : n >= 10 && n <= 20 ? '' : n % 10 === 1 ? '' : (n % 10 >= 2 && n % 10 <= 9) ? 'os' : ''}`,
+  users_count: (n: number) => `${n} ${plural(n, 'paskyra', 'paskyros', 'paskyrų')}`,
   users_you: '(tu)',
   users_joined: (date: string) => `Prisijungė ${date}`,
   users_ban: 'Užblokuoti',
@@ -353,6 +431,8 @@ const lt = {
   admin_tab_site: 'Svetainė',
   admin_tab_badges: 'Ženkleliai',
   admin_tab_motd: 'Dienos žinutė',
+  admin_tab_achievements: 'Pasiekimai',
+  admin_tab_demon: 'Sunkiausias demonas',
   motd_title: 'Dienos žinutės',
   motd_hint: 'Pridėk trumpas žinutes. Kiekvieną dieną atsitiktinai parenkama viena ir po antrašte slenka per ekraną (kas 30–60 s, praslenka per 15 s). Parinkus kitos dienos žinutę, ankstesnė ištrinama, tad kiekviena rodoma tik vieną dieną.',
   motd_placeholder: 'Įrašyk dienos žinutę…',

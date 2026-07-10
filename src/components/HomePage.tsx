@@ -23,6 +23,12 @@ export default function HomePage() {
       emoji: '🏆',
     },
     {
+      name: t.achievements_title,
+      description: t.home_achievements_desc,
+      to: '/achievements',
+      emoji: '🏅',
+    },
+    {
       name: t.bounty_board_title,
       description: t.home_bounty_desc,
       to: '/bounty-board',

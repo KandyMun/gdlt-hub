@@ -10,6 +10,7 @@ import ChangelogPage from './components/ChangelogPage'
 import ProfilePage from './components/ProfilePage'
 import LtclPage from './components/LtclPage'
 import BountyBoardPage from './components/BountyBoardPage'
+import AchievementsPage from './components/AchievementsPage'
 import UserSearch from './components/UserSearch'
 import AdminPage from './components/admin/AdminPage'
 import FreepostApp from './FreepostApp'
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/user-search" element={<UserSearch />} />
         <Route path="/ltcl/*" element={<LtclPage />} />
         <Route path="/bounty-board" element={<BountyBoardPage />} />
+        <Route path="/achievements" element={<AchievementsPage />} />
         {/* Hub-wide admin panel. Self-gates on the manage_site capability. */}
         <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/freepost/*" element={<FreepostApp />} />

@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.6] - 2026-07-11
+
+### Pridėta
+- Naujas „Pasiekimai" skirtukas pagrindiniame puslapyje — vieta sunkiausiems Lietuvos Geometry Dash pasiekimams. Jame administratorių kuriami „TOP 10" sąrašai rodomi greta vienas kito, o šalia — sunkiausio Lietuvos extreme demono istorija. Kol kas paruošti trys sąrašai: sunkiausių demonų, sunkiausių challenge'ų ir žaidėjų pagal sunkiausią įveiktą demoną.
+- Bet koks kiekis administratorių valdomų „TOP 10" sąrašų, kiekvienas kaip atskira kortelė. Kiekvienas įrašas gali turėti kelis žmones, kiekvieną su savo bandymų skaičiumi, ir nebūtiną nuorodą — paspaudus lygio pavadinimą atidaroma nurodyta nuoroda. Žmogų galima įrašyti tiesiog tekstu arba susieti su registruota hub paskyra (rodoma avataras ir nuoroda į profilį).
+- Sunkiausio extreme demono istorija — atskira skiltis su laiko juosta, rodančia, koks lygis buvo sunkiausias tam tikru metu. Įrašai automatiškai rikiuojami nuo naujausios datos, tad vėliausias visada viršuje ir pažymėtas „Dabartinis". Kiekvienas įrašas turi lygio pavadinimą, datą (renkamą per kalendorių, YYYY-MM-DD formatu), lygį įveikusį žmogų ir pastabas.
+- Karuselė: sąrašai ir istorija rodomi puslapiais (daugiausiai po 3 korteles) — daugiau kortelių keliauja į kitą puslapį. Virš sąrašų yra burbuliukų valdiklis, o šalia antraštės — rodyklės, rodančios, kas yra gretimame puslapyje. Antraštės pavadinimas, emoji ir paantraštė keičiasi pagal atvertą puslapį (Pasiekimai / Sunkiausias demonas).
+
+### Pataisyta
+- Lietuviškos skaitmenų galūnės — kur skaičius jungiamas su daiktavardžiu (pvz. „255 021 bandymas", „7 687 bandymai", „80 000 bandymų"), dabar parenkama teisinga forma pagal lietuvių kalbos taisykles: 1, 21, 31… → vienaskaita; 2–9, 22–29… → daugiskaita; 10–20, dešimtys, šimtai, tūkstančiai… → kilmininkas. Pataisyta pasiekimų bandymuose ir sąrašų / lygių / pakelių / įrašų bei paskyrų skaičiavimuose.
+
 ## [v0.5.6] - 2026-07-10
 
 ### Pridėta

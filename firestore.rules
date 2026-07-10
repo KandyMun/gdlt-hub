@@ -73,6 +73,23 @@ service cloud.firestore {
       allow delete: if isSignedIn();
     }
 
+    // Hub content pages curated by admins only (super-admin + administrator):
+    // the "top 10" lists (achievementLists = the named lists shown as tabs,
+    // achievements = their entries) and the hardest-extreme-demon history
+    // timeline. Anyone can read; only admins write.
+    match /achievementLists/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /achievements/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /demonHistory/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /users/{uid} {
       // Public: usernames, avatars, roles, etc. are shown to logged-out
       // visitors too (feed, LTCL, profiles, bounty board).

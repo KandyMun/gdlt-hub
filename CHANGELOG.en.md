@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.6] - 2026-07-11
+
+### Added
+- New "Achievements" tab on the home page — a place for Lithuania's hardest Geometry Dash achievements. It holds admin-managed "top 10" lists shown side by side, plus the history of the hardest extreme demon in Lithuania. Three lists are set up to start: hardest demons, hardest challenges, and top players by hardest completed demon.
+- Any number of admin-managed "top 10" lists, each its own card. Every entry can credit multiple people, each with their own attempt count, and an optional link — clicking the level name opens it. A person can be plain text or linked to a registered hub account (showing their avatar and a link to their profile).
+- Hardest extreme demon history — a separate section with a timeline showing which level held the crown over time. Entries are sorted newest-date-first automatically, so the latest is always on top and marked "Current". Each entry has a level name, a date (chosen with a calendar picker, in YYYY-MM-DD format), the person who completed it, and notes.
+- Carousel: the lists and history are shown as pages (3 cards max) — extra cards spill onto the next page. Dot controls sit above the lists, and arrows beside the title hint at what's on the adjacent page. The header title, emoji and subtitle change with the page in view (Achievements / Hardest demon).
+
+### Fixed
+- Lithuanian number-based word forms — wherever a number is joined with a noun (e.g. "255 021 bandymas", "7 687 bandymai", "80 000 bandymų"), the correct form is now chosen per Lithuanian grammar: 1, 21, 31… singular; 2–9, 22–29… plural; 10–20, tens, hundreds, thousands… genitive. Applied to achievement attempts and to the list / level / pack / entry / account counts.
+
 ## [v0.5.6] - 2026-07-10
 
 ### Added

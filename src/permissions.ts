@@ -16,6 +16,7 @@ export type Capability =
   | 'manage_site' // site-wide admin (freeze, posts, users, bans)
   | 'manage_bounties' // confirm/reopen bounties on the Bounty Board
   | 'manage_motd' // add / remove message-of-the-day entries
+  | 'manage_hub_pages' // curate the achievements list + hardest-demon history
 
 // Roles that grant blanket access to everything.
 export const SUPER_ROLES = ['administrator']
@@ -36,6 +37,7 @@ const ALL_CAPS: Capability[] = [
   'manage_site',
   'manage_bounties',
   'manage_motd',
+  'manage_hub_pages',
 ]
 
 // Resolve a set of role ids to the capabilities they grant.
