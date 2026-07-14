@@ -554,6 +554,18 @@ const en = {
   profile_links_hint: 'Leave a field empty to hide that link.',
   profile_links_err_url: (name: string) => `Enter a valid URL for ${name}.`,
   profile_links_err_incomplete: 'Custom links need both a label and a URL.',
+
+  // LTCL admin staged changes
+  ltcl_stage_pending: (n: number) => `${n} staged change${n === 1 ? '' : 's'}`,
+  ltcl_stage_commit: 'Commit changes',
+  ltcl_stage_committing: 'Saving…',
+  ltcl_stage_discard: 'Discard',
+  ltcl_stage_hint: 'Changes stack up and are only saved when you commit.',
+  ltcl_exit_title: 'Unsaved changes',
+  ltcl_exit_body: 'You have staged list changes that are not yet committed. What would you like to do?',
+  ltcl_exit_commit: 'Commit & leave',
+  ltcl_exit_discard: 'Discard & leave',
+  ltcl_exit_stay: 'Stay',
 }
 
 export default en

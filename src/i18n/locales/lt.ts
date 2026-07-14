@@ -570,6 +570,18 @@ const lt = {
   profile_links_hint: 'Palikite laukelį tuščią, kad paslėptumėte nuorodą.',
   profile_links_err_url: (name: string) => `Įveskite teisingą ${name} nuorodą.`,
   profile_links_err_incomplete: 'Pasirinktinėms nuorodoms reikia ir pavadinimo, ir nuorodos.',
+
+  // LTCL admin staged changes
+  ltcl_stage_pending: (n: number) => `${n} nepatvirtint${n === 1 ? 'as pakeitimas' : 'i pakeitimai'}`,
+  ltcl_stage_commit: 'Įrašyti pakeitimus',
+  ltcl_stage_committing: 'Įrašoma…',
+  ltcl_stage_discard: 'Atmesti',
+  ltcl_stage_hint: 'Pakeitimai kaupiami ir įrašomi tik paspaudus „Įrašyti pakeitimus“.',
+  ltcl_exit_title: 'Neišsaugoti pakeitimai',
+  ltcl_exit_body: 'Turite nepatvirtintų sąrašo pakeitimų. Ką norite daryti?',
+  ltcl_exit_commit: 'Įrašyti ir išeiti',
+  ltcl_exit_discard: 'Atmesti ir išeiti',
+  ltcl_exit_stay: 'Likti',
 }
 
 export default lt

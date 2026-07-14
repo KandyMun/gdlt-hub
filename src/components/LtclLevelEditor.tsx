@@ -6,10 +6,6 @@ import {
   type LtclLevel,
   type LtclRecord,
   pointsForPlacement,
-  saveLevel,
-  reorderTo,
-  addLevelAt,
-  deleteLevel,
   uploadLevelThumbnail,
 } from '../ltclLevels'
 import { useAuth } from '../AuthContext'
@@ -17,9 +13,15 @@ import { useFileDrop } from '../useFileDrop'
 
 interface Props {
   level: LtclLevel | null // null = adding a new level
-  levels: LtclLevel[] // current full list, for reorder/add math
+  levels: LtclLevel[] // current (draft) full list, for reorder/add math
   canManageLevels: boolean // false = records-only editor (moderator)
   onClose: () => void
+  // Metadata/record edits save immediately; placement changes (add/move/remove)
+  // are staged on the parent's draft and only written when the admin commits.
+  onSaveMeta: (level: LtclLevel) => Promise<void>
+  onStageAdd: (level: LtclLevel, placement: number) => void
+  onStageMove: (levelId: number, placement: number) => void
+  onStageRemove: (levelId: number) => void
 }
 
 // While editing, record fields are held as plain strings so partial input like
@@ -114,7 +116,16 @@ const blank: LtclLevel = {
   records: [],
 }
 
-export default function LtclLevelEditor({ level, levels, canManageLevels, onClose }: Props) {
+export default function LtclLevelEditor({
+  level,
+  levels,
+  canManageLevels,
+  onClose,
+  onSaveMeta,
+  onStageAdd,
+  onStageMove,
+  onStageRemove,
+}: Props) {
   const { t } = useI18n()
   const { user } = useAuth()
   const isNew = level === null
@@ -154,7 +165,6 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
   }, [])
 
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState('')
 
@@ -198,11 +208,11 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
   async function handleSave() {
     setError('')
 
-    // Records-only editor (moderator): leave all level metadata untouched.
+    // Records-only editor (moderator): save records immediately, no staging.
     if (metaLocked) {
       setSaving(true)
       try {
-        await saveLevel({ ...base, records: cleanRecords() })
+        await onSaveMeta({ ...base, records: cleanRecords() })
         onClose()
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Error')
@@ -236,10 +246,13 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
     setSaving(true)
     try {
       if (isNew) {
-        await addLevelAt(levels, next, placementNum)
+        // Adds stage entirely (the new level's metadata lives only in the draft
+        // until commit).
+        onStageAdd(next, placementNum)
       } else {
-        await saveLevel(next)
-        if (base.placement !== placementNum) await reorderTo(levels, next.levelId, placementNum)
+        // Metadata/records write now; a placement change is staged as a move.
+        await onSaveMeta(next)
+        if (base.placement !== placementNum) onStageMove(next.levelId, placementNum)
       }
       onClose()
     } catch (e) {
@@ -248,16 +261,11 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
     }
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!level) return
-    setDeleting(true)
-    try {
-      await deleteLevel(levels, level.levelId)
-      onClose()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error')
-      setDeleting(false)
-    }
+    // Removal is staged; it isn't written until the admin commits.
+    onStageRemove(level.levelId)
+    onClose()
   }
 
   const inputCls =
@@ -425,8 +433,7 @@ export default function LtclLevelEditor({ level, levels, canManageLevels, onClos
               (confirmDelete ? (
                 <button
                   onClick={handleDelete}
-                  disabled={deleting}
-                  className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
+                  className="bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg"
                 >
                   {t.ltcl_edit_confirm_delete}
                 </button>

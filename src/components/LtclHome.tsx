@@ -1,29 +1,160 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit } from 'firebase/firestore'
 import { db } from '../firebase'
+import { useLtclLevels, deleteChangelogEntry } from '../ltclLevels'
+import { useIsAdmin } from '../useIsAdmin'
 import { useI18n } from '../i18n'
 import crownIcon from '/crown.svg'
 import userGearIcon from '/user-gear.svg'
 import codeIcon from '/code.svg'
 import userShieldIcon from '/user-shield.svg'
 
-// LTCL landing page: welcome blurb, a level changelog and the list staff.
-// The changelog is placeholder data for now — edit the array below (or wire it
-// to Firestore later). The staff list is resolved live from user roles.
+// LTCL landing page: welcome blurb, a live level changelog and the list staff.
+// The changelog is generated automatically: every list edit appends a doc to the
+// `changelog` collection (see the logging helpers in ltclLevels.ts), which the
+// hook below streams in. The staff list is resolved live from user roles.
 
-type ChangeEntry = { level: string; text: string }
+type ChangeEntry = { id?: string; level: string; text: string }
 type ChangeDay = { date: string; entries: ChangeEntry[] }
 
-// Newest first. `text` is the placement note shown after the level name.
-const CHANGELOG: ChangeDay[] = [
-  {
-    date: '2026-07-04',
-    entries: [
-      { level: 'Placeholder Challenge', text: 'was placed at #1 to start the list.' },
-    ],
-  },
-]
+// One stored changelog event. `level` is the bolded lead level ('' for list-wide
+// lines like Legacy pushes), `text` the rest of the sentence, `date` the day it
+// happened (YYYY-MM-DD), `ts` a millisecond timestamp used only for ordering.
+type ChangelogDoc = { level: string; text: string; date: string; ts: number }
+
+// Stream the changelog newest-first and group it by day for display.
+function useChangelog(): ChangeDay[] {
+  const [docs, setDocs] = useState<(ChangelogDoc & { id: string })[]>([])
+  useEffect(() => {
+    return onSnapshot(
+      query(collection(db, 'changelog'), orderBy('ts', 'desc'), limit(1000)),
+      (snap) => setDocs(snap.docs.map((d) => ({ id: d.id, ...(d.data() as ChangelogDoc) }))),
+    )
+  }, [])
+  return useMemo(() => {
+    const days: ChangeDay[] = []
+    const byDate = new Map<string, ChangeEntry[]>()
+    for (const d of docs) {
+      let entries = byDate.get(d.date)
+      if (!entries) {
+        entries = []
+        byDate.set(d.date, entries)
+        days.push({ date: d.date, entries })
+      }
+      entries.push({ id: d.id, level: d.level, text: d.text })
+    }
+    return days
+  }, [docs])
+}
+
+// ─── Changelog entry highlighting ────────────────────────────────────────────
+// Renders a changelog line with two things emphasized in white: placement
+// numbers (shown as #N, dropping the "vietą/vietos/..." word) and every level
+// name. Level names have no delimiters, so we highlight by exclusion — anything
+// that isn't a placement phrase or a connector word (STOPWORDS) is a level name.
+// A name that matches a level currently on the list links to that level's page;
+// new levels need no upkeep, only add a STOPWORD if a connector renders white.
+
+// Placement phrases, captured so they can be re-rendered as "#N":
+//   A: "iš/į/iki 20 vietos"   B: "17 ir 18 vietos"   C: bare "į 18"
+const POSITION_RE =
+  /(iš|į|iki) (\d+) viet(?:os|ą|ų|a)|(\d+) ir (\d+) vietos|(į) (\d+)(?=[,.]| |$)/g
+
+const STOPWORDS = new Set([
+  'į', 'iš', 'iki', 'virš', 'po', 'ir', 'tarp', 'dabar', 'aukščiau', 'dėl',
+  'reikalavimų', 'neatitikimo', 'nes', 'buvo', 'ištrintas', 'gd', 'serverių',
+  'yra', 'neįmanomas', 'vietomis', 'lieka', 'tam', 'pačiam', 'tik', 'trūksta',
+  'nuomonių', 'vieta', 'vietą', 'vietos', 'vietų', 'gali', 'keistis', 'sąrašas',
+  'pratęstas', 'legacy', 'sąrašą', 'sąrašo', 'grįžta', 'įdėtas', 'įdėti',
+  'perkeltas', 'pakeltas', 'nuleistas', 'pašalintas', 'sukeisti', 'išstumiamas',
+  'išstumiami', "spot'e",
+])
+
+// Fold Lithuanian diacritics + case so text spellings match list level names.
+function fold(s: string): string {
+  return s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+const isSep = (t: string) => /^(?:\s+|[.,()])$/.test(t)
+
+// One level name: a link if it's on the list, otherwise plain white.
+function nameNode(name: string, levels: Map<string, number>, key: string): ReactNode {
+  const id = levels.get(fold(name))
+  if (id !== undefined) {
+    return (
+      <Link
+        key={key}
+        to={`/ltcl/list?level=${id}`}
+        className="text-white font-medium hover:text-violet-300 hover:underline"
+      >
+        {name}
+      </Link>
+    )
+  }
+  return <span key={key} className="text-white font-medium">{name}</span>
+}
+
+// Highlight level names in a placement-free run, grouping consecutive
+// non-connector words into one name so multi-word titles link as a single unit.
+function highlightNames(text: string, key: string, levels: Map<string, number>): ReactNode[] {
+  const parts = text.split(/(\s+|[.,()])/).filter((p) => p !== '')
+  const nodes: ReactNode[] = []
+  let i = 0
+  let k = 0
+  while (i < parts.length) {
+    const tok = parts[i]
+    if (!isSep(tok) && !STOPWORDS.has(tok.toLowerCase())) {
+      const words = [tok]
+      let j = i + 1
+      while (
+        j + 1 < parts.length &&
+        /^\s+$/.test(parts[j]) &&
+        !isSep(parts[j + 1]) &&
+        !STOPWORDS.has(parts[j + 1].toLowerCase())
+      ) {
+        words.push(parts[j + 1])
+        j += 2
+      }
+      nodes.push(nameNode(words.join(' '), levels, `${key}-n${k++}`))
+      i = j
+    } else {
+      nodes.push(<span key={`${key}-s${k++}`}>{tok}</span>)
+      i++
+    }
+  }
+  return nodes
+}
+
+// Render a full line: placements as white #N, level names highlighted/linked.
+function highlightLine(text: string, levels: Map<string, number>): ReactNode[] {
+  const nodes: ReactNode[] = []
+  let last = 0
+  let seg = 0
+  let m: RegExpExecArray | null
+  POSITION_RE.lastIndex = 0
+  const num = (n: string, key: string) => (
+    <span key={key} className="text-white font-medium">#{n}</span>
+  )
+  while ((m = POSITION_RE.exec(text)) !== null) {
+    if (m.index > last) nodes.push(...highlightNames(text.slice(last, m.index), `s${seg}`, levels))
+    if (m[1] !== undefined) {
+      nodes.push(<span key={`pp${seg}`}>{m[1]} </span>, num(m[2], `pn${seg}`))
+    } else if (m[3] !== undefined) {
+      nodes.push(num(m[3], `pa${seg}`), <span key={`pi${seg}`}> ir </span>, num(m[4], `pb${seg}`))
+    } else {
+      nodes.push(<span key={`pp${seg}`}>{m[5]} </span>, num(m[6], `pn${seg}`))
+    }
+    last = m.index + m[0].length
+    seg++
+  }
+  if (last < text.length) nodes.push(...highlightNames(text.slice(last), `s${seg}`, levels))
+  return nodes
+}
+
+function renderEntry(e: ChangeEntry, levels: Map<string, number>): ReactNode[] {
+  return highlightLine(e.level ? `${e.level} ${e.text}` : e.text, levels)
+}
 
 type StaffUser = { username: string; displayName?: string; roles: string[] }
 
@@ -84,6 +215,14 @@ function StaffChip({ user, icon }: { user: StaffUser; icon: string }) {
 export default function LtclHome() {
   const { t, locale } = useI18n()
   const staff = useStaff()
+  const isAdmin = useIsAdmin()
+  const { levels } = useLtclLevels()
+  const changelog = useChangelog()
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const levelMap = useMemo(
+    () => new Map(levels.map((l) => [fold(l.name), l.levelId])),
+    [levels],
+  )
 
   const groups = STAFF_GROUPS
     .map((g) => ({
@@ -127,20 +266,52 @@ export default function LtclHome() {
         {/* Changelog */}
         <section className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6">
           <h2 className="text-lg font-bold text-white mb-4">{t.ltcl_changelog_title}</h2>
-          <div className="flex flex-col gap-5">
-            {CHANGELOG.map((day) => (
+          {changelog.length === 0 ? (
+            <p className="text-neutral-500 text-sm">
+              {locale === 'lt' ? 'Kol kas pakeitimų nėra.' : 'No changes yet.'}
+            </p>
+          ) : (
+          <div className="flex flex-col gap-5 max-h-[32rem] overflow-y-auto pr-2">
+            {changelog.map((day) => (
               <div key={day.date}>
                 <p className="text-violet-400 font-semibold text-sm mb-1.5">{day.date}</p>
                 <ul className="flex flex-col gap-1.5">
                   {day.entries.map((e, i) => (
-                    <li key={i} className="text-sm text-neutral-400">
-                      <span className="text-white font-medium">{e.level}</span> {e.text}
+                    <li key={e.id ?? i} className="group flex items-start gap-2 text-sm text-neutral-400">
+                      <span className="flex-1 min-w-0">{renderEntry(e, levelMap)}</span>
+                      {isAdmin && e.id && (
+                        confirmDeleteId === e.id ? (
+                          <span className="flex items-center gap-1.5 shrink-0 text-xs">
+                            <button
+                              onClick={() => { deleteChangelogEntry(e.id!); setConfirmDeleteId(null) }}
+                              className="text-red-400 hover:text-red-300 font-medium"
+                            >
+                              {locale === 'lt' ? 'Ištrinti' : 'Delete'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-neutral-500 hover:text-neutral-300"
+                            >
+                              {locale === 'lt' ? 'Atšaukti' : 'Cancel'}
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(e.id!)}
+                            aria-label={locale === 'lt' ? 'Ištrinti įrašą' : 'Delete entry'}
+                            className="shrink-0 text-neutral-600 hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                          >
+                            ✕
+                          </button>
+                        )
+                      )}
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
+          )}
         </section>
       </div>
 

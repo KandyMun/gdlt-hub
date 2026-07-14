@@ -205,10 +205,176 @@ export function useLtclLevels() {
   return { levels, loaded }
 }
 
+// ─── Changelog phrasing (pure) ───────────────────────────────────────────────
+// Each staged list edit yields one or more changelog entries in the same
+// Lithuanian phrasing the hand-written log used, so the LTCL home highlighter
+// formats them (placements → #N, level names linked). These are pure so the
+// admin panel can stack edits on a draft and only commit the writes at the end.
+
+export type ChangelogEntry = { level: string; text: string }
+
+// Local date in Lithuania as YYYY-MM-DD (groups entries by day on the page).
+function changelogDate(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Vilnius' })
+}
+
+// "virš X ir po Y" clause for a level sitting at array index `idx` in an ordered
+// (placement-ascending) list. po = the better-ranked neighbor above it in the
+// list, virš = the worse-ranked neighbor below it. Ends the sentence with a dot.
+function neighborClause(ordered: LtclLevel[], idx: number): string {
+  const po = ordered[idx - 1]?.name // better placement, shown after "po"
+  const virs = ordered[idx + 1]?.name // worse placement, shown after "virš"
+  if (virs && po) return `, virš ${virs} ir po ${po}.`
+  if (virs) return `, virš ${virs}.`
+  if (po) return `, po ${po}.`
+  return '.'
+}
+
+// "A, B ir C" — comma list with a final "ir", matching the changelog style.
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} ir ${names[names.length - 1]}`
+}
+
+function legacyEntry(names: string[]): ChangelogEntry {
+  return {
+    level: '',
+    text:
+      names.length === 1
+        ? `Į legacy sąrašą išstumiamas ${names[0]}.`
+        : `Į legacy sąrašą išstumiami ${joinNames(names)}.`,
+  }
+}
+
+function legacyReturnEntry(names: string[]): ChangelogEntry {
+  return { level: '', text: `Į sąrašą grįžta ${joinNames(names)}.` }
+}
+
+// Names of levels shoved from a ranked spot (≤#100) into Legacy (>#100) going
+// from `before` to `after`, excluding the level the admin explicitly acted on.
+function legacyDropNames(before: LtclLevel[], after: LtclLevel[], excludeId: number): string[] {
+  const beforeById = new Map(before.map((l) => [l.levelId, l]))
+  const drops: string[] = []
+  after.forEach((l, i) => {
+    const b = beforeById.get(l.levelId)
+    if (
+      b &&
+      b.placement != null &&
+      b.placement <= LEGACY_AFTER &&
+      i + 1 > LEGACY_AFTER &&
+      l.levelId !== excludeId
+    ) {
+      drops.push(l.name)
+    }
+  })
+  return drops
+}
+
+// Names of levels pulled from Legacy (>#100) back onto the ranked list (≤#100)
+// going from `before` to `after` — the mirror of legacyDropNames, e.g. when a
+// removal or a downward move shifts everything up.
+function legacyReturnNames(before: LtclLevel[], after: LtclLevel[], excludeId: number): string[] {
+  const beforeById = new Map(before.map((l) => [l.levelId, l]))
+  const returns: string[] = []
+  after.forEach((l, i) => {
+    const b = beforeById.get(l.levelId)
+    if (
+      b &&
+      b.placement != null &&
+      b.placement > LEGACY_AFTER &&
+      i + 1 <= LEGACY_AFTER &&
+      l.levelId !== excludeId
+    ) {
+      returns.push(l.name)
+    }
+  })
+  return returns
+}
+
+// Renumber an ordered list to placement 1..N and recompute points.
+function renumber(ordered: LtclLevel[]): LtclLevel[] {
+  return ordered.map((l, i) => ({ ...l, placement: i + 1, points: pointsForPlacement(i + 1) }))
+}
+
+// ─── Draft planners (pure) ───────────────────────────────────────────────────
+// Each returns the new ordered list plus the changelog entries the edit
+// produces. They never touch Firestore — the admin panel applies them to an
+// in-memory draft and calls commitStagedChanges() once, at the end.
+
+export interface PlanResult {
+  list: LtclLevel[]
+  entries: ChangelogEntry[]
+}
+
+// Insert a new level at `target` (default: end of the list).
+export function applyAdd(list: LtclLevel[], level: LtclLevel, target?: number): PlanResult {
+  const before = [...list].sort(byPlacement)
+  const t = target ?? before.length + 1
+  const idx = Math.max(0, Math.min(before.length, t - 1))
+  const inserted = [...before]
+  inserted.splice(idx, 0, level)
+  const after = renumber(inserted)
+  const entries: ChangelogEntry[] = [
+    { level: level.name, text: `įdėtas į ${idx + 1} vietą${neighborClause(after, idx)}` },
+  ]
+  const drops = legacyDropNames(before, after, level.levelId)
+  if (drops.length) entries.push(legacyEntry(drops))
+  return { list: after, entries }
+}
+
+// Move an existing level to a new 1-based placement.
+export function applyMove(list: LtclLevel[], levelId: number, target: number): PlanResult {
+  const before = [...list].sort(byPlacement)
+  const moving = before.find((l) => l.levelId === levelId)
+  if (!moving) return { list: before, entries: [] }
+  const from = moving.placement
+  const without = before.filter((l) => l.levelId !== levelId)
+  const idx = Math.max(0, Math.min(without.length, target - 1))
+  without.splice(idx, 0, moving)
+  const after = renumber(without)
+  const to = idx + 1
+  const entries: ChangelogEntry[] = []
+  if (from != null && from !== to) {
+    if (Math.abs(from - to) === 1) {
+      // A one-spot move just swaps two adjacent levels. After renumbering they
+      // sit at the smaller (higher) and larger (lower) of the two placements.
+      const higher = after[Math.min(from, to) - 1].name
+      const lower = after[Math.max(from, to) - 1].name
+      entries.push({
+        level: '',
+        text: `${higher} ir ${lower} sukeisti vietomis, ${higher} dabar aukščiau.`,
+      })
+    } else {
+      const verb = to < from ? 'pakeltas' : 'nuleistas'
+      entries.push({
+        level: moving.name,
+        text: `${verb} iš ${from} vietos į ${to} vietą${neighborClause(after, idx)}`,
+      })
+    }
+  }
+  const drops = legacyDropNames(before, after, levelId)
+  if (drops.length) entries.push(legacyEntry(drops))
+  const returns = legacyReturnNames(before, after, levelId)
+  if (returns.length) entries.push(legacyReturnEntry(returns))
+  return { list: after, entries }
+}
+
+// Remove a level, closing the gap so placements stay contiguous.
+export function applyRemove(list: LtclLevel[], levelId: number): PlanResult {
+  const before = [...list].sort(byPlacement)
+  const removed = before.find((l) => l.levelId === levelId)
+  const after = renumber(before.filter((l) => l.levelId !== levelId))
+  const entries: ChangelogEntry[] = []
+  if (removed) entries.push({ level: removed.name, text: 'pašalintas iš sąrašo.' })
+  const returns = legacyReturnNames(before, after, levelId)
+  if (returns.length) entries.push(legacyReturnEntry(returns))
+  return { list: after, entries }
+}
+
 // ─── Admin writes ────────────────────────────────────────────────────────────
 
-// Create or overwrite a single level. Does not touch other levels' placements —
-// use reorderTo for that. youtubeId is derived from the verification url.
+// Create or overwrite a single level's full document (used when committing a
+// newly-added level). youtubeId is derived from the verification url.
 export async function saveLevel(level: LtclLevel): Promise<void> {
   const clean: LtclLevel = {
     ...level,
@@ -217,50 +383,75 @@ export async function saveLevel(level: LtclLevel): Promise<void> {
   await setDoc(doc(db, 'levels', String(level.levelId)), clean)
 }
 
-// Renumber a full ordered list (placement 1..N) and recompute points, writing
-// only the docs whose placement or points actually changed.
-async function persistOrder(ordered: LtclLevel[], prev: LtclLevel[]): Promise<void> {
-  const prevById = new Map(prev.map((l) => [l.levelId, l]))
+// Save just a level's metadata + records, leaving placement/points untouched —
+// those are owned by the staged-reorder flow. Used for immediate (non-staged)
+// metadata and record edits.
+export async function saveLevelMeta(level: LtclLevel): Promise<void> {
+  const meta: Partial<LtclLevel> = {
+    ...level,
+    youtubeId: extractYoutubeId(level.verificationUrl ?? ''),
+  }
+  delete meta.placement
+  delete meta.points
+  await setDoc(doc(db, 'levels', String(level.levelId)), meta, { merge: true })
+}
+
+// Delete a single changelog entry by its doc id. Firestore rules restrict this
+// to site admins (super-admin / administrator).
+export async function deleteChangelogEntry(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'changelog', id))
+}
+
+// Commit a batch of staged edits: write the difference between the live list and
+// the draft (adds → full docs, moves/shifts → placement+points, removals →
+// deletes), then append the staged changelog entries in order (later action =
+// newer). Changelog writes are best-effort and never undo the list changes.
+export async function commitStagedChanges(
+  live: LtclLevel[],
+  draft: LtclLevel[],
+  entries: ChangelogEntry[],
+): Promise<void> {
+  const liveById = new Map(live.map((l) => [l.levelId, l]))
+  const draftById = new Map(draft.map((l) => [l.levelId, l]))
+
   const batch = writeBatch(db)
-  let changed = 0
-  ordered.forEach((level, i) => {
-    const placement = i + 1
-    const points = pointsForPlacement(placement)
-    const before = prevById.get(level.levelId)
-    if (!before || before.placement !== placement || before.points !== points) {
-      batch.set(doc(db, 'levels', String(level.levelId)), { placement, points }, { merge: true })
-      changed++
+  for (const l of live) {
+    if (!draftById.has(l.levelId)) batch.delete(doc(db, 'levels', String(l.levelId)))
+  }
+  for (const l of draft) {
+    const before = liveById.get(l.levelId)
+    if (!before) {
+      // Added in this session — its full metadata lives only in the draft.
+      batch.set(doc(db, 'levels', String(l.levelId)), {
+        ...l,
+        youtubeId: extractYoutubeId(l.verificationUrl ?? ''),
+      })
+    } else if (before.placement !== l.placement || before.points !== l.points) {
+      batch.set(
+        doc(db, 'levels', String(l.levelId)),
+        { placement: l.placement, points: l.points },
+        { merge: true },
+      )
     }
-  })
-  if (changed > 0) await batch.commit()
-}
+  }
+  await batch.commit()
 
-// Move a level to a new 1-based placement, shifting everything else and
-// recomputing points across the affected range.
-export async function reorderTo(current: LtclLevel[], levelId: number, target: number): Promise<void> {
-  const sorted = [...current].sort(byPlacement)
-  const moving = sorted.find((l) => l.levelId === levelId)
-  if (!moving) return
-  const without = sorted.filter((l) => l.levelId !== levelId)
-  const idx = Math.max(0, Math.min(without.length, target - 1))
-  without.splice(idx, 0, moving)
-  await persistOrder(without, current)
-}
-
-// Delete a level, then close the gap so placements stay contiguous.
-export async function deleteLevel(current: LtclLevel[], levelId: number): Promise<void> {
-  await deleteDoc(doc(db, 'levels', String(levelId)))
-  const remaining = [...current].filter((l) => l.levelId !== levelId).sort(byPlacement)
-  await persistOrder(remaining, current)
-}
-
-// Add a new level at a given placement (default: end of the list), shifting the
-// rest down and recomputing points.
-export async function addLevelAt(current: LtclLevel[], level: LtclLevel, target?: number): Promise<void> {
-  await saveLevel(level)
-  const sorted = [...current].sort(byPlacement)
-  const t = target ?? sorted.length + 1
-  const idx = Math.max(0, Math.min(sorted.length, t - 1))
-  sorted.splice(idx, 0, level)
-  await persistOrder(sorted, current)
+  if (entries.length > 0) {
+    try {
+      const clBatch = writeBatch(db)
+      const base = Date.now()
+      const date = changelogDate()
+      entries.forEach((e, i) => {
+        clBatch.set(doc(collection(db, 'changelog')), {
+          level: e.level,
+          text: e.text,
+          date,
+          ts: base + i,
+        })
+      })
+      await clBatch.commit()
+    } catch {
+      // Non-fatal — the list changes already committed.
+    }
+  }
 }

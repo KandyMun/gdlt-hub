@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.6.1] - 2026-07-14
+
+### Added
+- On the LTCL home page — a live list changelog that updates automatically as levels change position. Every action is logged on its own: a level being added, moved (showing from which spot to which), adjacent levels swapping places (noting which is now higher), removed, and pushed into "legacy" or returning from it. Placements show as #N, and level names link to their page on the list. The full previous change history has also been imported.
+- Staged changes in list administration — placement changes (add, move, remove) no longer save immediately; they stack on top of each other and are written all at once when you press "Commit changes". Trying to leave with un-committed changes shows a warning: discard them, commit, or stay.
+- Admins can delete changelog entries.
+
+### Changed
+- The changelog on the LTCL page is shown in its own scrollable block instead of taking up the whole page.
+
+### Note
+- The list changelog is currently Lithuanian-only — there's no English version yet.
+
 ## [v0.6] - 2026-07-11
 
 ### Added

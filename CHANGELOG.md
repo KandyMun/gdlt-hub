@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.6.1] - 2026-07-14
+
+### Pridėta
+- LTCL pagrindiniame puslapyje — gyvas sąrašo pakeitimų žurnalas, kuris automatiškai atsinaujina keičiant lygių vietas. Kiekvienas veiksmas įrašomas savaime: lygio įdėjimas, perkėlimas (rodoma, iš kurios į kurią vietą), gretimų lygių sukeitimas vietomis (nurodoma, kuris dabar aukščiau), pašalinimas bei išstūmimas į „legacy" ar grįžimas iš jo. Vietos rodomos kaip #N, o lygių pavadinimai yra nuorodos į jų puslapį sąraše. Įkelta ir visa ankstesnė pakeitimų istorija.
+- Kaupiami pakeitimai sąrašo administravime — vietų keitimai (įdėjimas, perkėlimas, pašalinimas) nebeįrašomi iškart, o dedami vienas ant kito ir įrašomi visi kartu paspaudus „Įrašyti pakeitimus". Bandant išeiti su neįrašytais pakeitimais parodomas įspėjimas: galima juos atmesti, įrašyti arba likti.
+- Administratoriai gali trinti pakeitimų žurnalo įrašus.
+
+### Pakeista
+- Pakeitimų žurnalas LTCL puslapyje rodomas atskirame slenkamame bloke, o ne užima visą puslapį.
+
+### Pastaba
+- Sąrašo pakeitimų žurnalas kol kas yra tik lietuvių kalba — angliškos versijos dar nėra.
+
 ## [v0.6] - 2026-07-11
 
 ### Pridėta

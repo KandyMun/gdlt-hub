@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../i18n'
 import { useAuth } from '../AuthContext'
 import { useFileDrop } from '../useFileDrop'
@@ -6,10 +6,17 @@ import {
   useLtclLevels,
   uploadLevelThumbnail,
   updateLevelThumbnail,
+  saveLevelMeta,
+  applyAdd,
+  applyMove,
+  applyRemove,
+  commitStagedChanges,
   LEGACY_AFTER,
   type LtclLevel,
+  type ChangelogEntry,
 } from '../ltclLevels'
 import { useCan } from '../permissions'
+import { useDraftGuard } from './draftGuardContext'
 import LtclLevelEditor from './LtclLevelEditor'
 import Spinner from './Spinner'
 
@@ -99,17 +106,100 @@ function LevelRow({
 // Level management for the LTCL admin panel: add, edit, delete and reorder
 // levels (and their records) via the shared level editor. Moderators with only
 // manage_records get the records-only editor; the editor enforces that.
+//
+// Placement changes (add / move / remove) don't write straight to Firestore —
+// they stack up on an in-memory `draft` and are only written when the admin hits
+// Commit. Metadata/record edits still save immediately. The pending bar + the
+// DraftGuard (exit alert) surface un-committed work.
 export default function LtclAdminLevels() {
   const { t } = useI18n()
   const canManageLevels = useCan('manage_levels')
   const { levels, loaded } = useLtclLevels()
+  const guard = useDraftGuard()
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<LtclLevel | null>(null)
   const [adding, setAdding] = useState(false)
 
+  // The working copy shown + edited. Staged edits mutate it; when there's
+  // nothing staged it mirrors the live list.
+  const [draft, setDraft] = useState<LtclLevel[]>([])
+  const [log, setLog] = useState<ChangelogEntry[]>([])
+  const [committing, setCommitting] = useState(false)
+  const pending = log.length > 0
+
+  // Keep the draft in sync with the live list while nothing is staged. This is
+  // a deliberate external→state sync (Firestore snapshot → editable draft).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!pending) setDraft(levels)
+  }, [levels, pending])
+
+  // ── Staging handlers ──
+  const onSaveMeta = useCallback(async (lvl: LtclLevel) => {
+    await saveLevelMeta(lvl)
+    // Keep the draft's copy in step (metadata only — placement stays draft-owned).
+    setDraft((d) =>
+      d.map((l) => (l.levelId === lvl.levelId ? { ...lvl, placement: l.placement, points: l.points } : l)),
+    )
+  }, [])
+
+  // Compute the plan from the current draft, then dispatch the two state updates
+  // separately. (Calling setLog inside a setDraft updater double-appends, since
+  // React invokes updaters more than once — e.g. under StrictMode.)
+  const onStageAdd = useCallback(
+    (lvl: LtclLevel, placement: number) => {
+      const { list, entries } = applyAdd(draft, lvl, placement)
+      setDraft(list)
+      setLog((p) => [...p, ...entries])
+    },
+    [draft],
+  )
+
+  const onStageMove = useCallback(
+    (levelId: number, placement: number) => {
+      const { list, entries } = applyMove(draft, levelId, placement)
+      setDraft(list)
+      setLog((p) => [...p, ...entries])
+    },
+    [draft],
+  )
+
+  const onStageRemove = useCallback(
+    (levelId: number) => {
+      const { list, entries } = applyRemove(draft, levelId)
+      setDraft(list)
+      setLog((p) => [...p, ...entries])
+    },
+    [draft],
+  )
+
+  const commit = useCallback(async () => {
+    setCommitting(true)
+    try {
+      await commitStagedChanges(levels, draft, log)
+      setLog([])
+    } finally {
+      setCommitting(false)
+    }
+  }, [levels, draft, log])
+
+  const discard = useCallback(() => {
+    setLog([])
+    setDraft(levels)
+  }, [levels])
+
+  // Report staging state + how to commit/discard to the exit guard.
+  useEffect(() => {
+    guard.setPending(pending)
+  }, [guard, pending])
+  useEffect(() => {
+    guard.registerHandlers({ commit, discard })
+  }, [guard, commit, discard])
+  useEffect(() => () => guard.setPending(false), [guard])
+
   const ranked = useMemo(
-    () => levels.map((level, i) => ({ level, rank: level.placement ?? i + 1 })),
-    [levels],
+    () => draft.map((level, i) => ({ level, rank: level.placement ?? i + 1 })),
+    [draft],
   )
   const q = search.toLowerCase().trim()
   const visible = q ? ranked.filter((r) => r.level.name.toLowerCase().includes(q)) : ranked
@@ -136,6 +226,39 @@ export default function LtclAdminLevels() {
         />
       </div>
 
+      {pending && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-amber-300 text-sm font-medium">{t.ltcl_stage_pending(log.length)}</span>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={discard}
+                disabled={committing}
+                className="text-neutral-300 hover:text-white disabled:opacity-50 text-sm px-3 py-1.5 rounded-lg"
+              >
+                {t.ltcl_stage_discard}
+              </button>
+              <button
+                onClick={commit}
+                disabled={committing}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium px-3 py-1.5 rounded-lg"
+              >
+                {committing ? t.ltcl_stage_committing : t.ltcl_stage_commit}
+              </button>
+            </div>
+          </div>
+          <p className="text-neutral-500 text-xs">{t.ltcl_stage_hint}</p>
+          <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+            {log.map((e, i) => (
+              <li key={i} className="text-xs text-neutral-400">
+                {e.level && <span className="text-neutral-200 font-medium">{e.level}</span>}{' '}
+                {e.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="text-neutral-500 text-sm">{t.ltcl_admin_count(visible.length)}</p>
 
       <div className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto">
@@ -153,9 +276,13 @@ export default function LtclAdminLevels() {
       {(adding || editing) && (
         <LtclLevelEditor
           level={adding ? null : editing}
-          levels={levels}
+          levels={draft}
           canManageLevels={canManageLevels}
           onClose={() => { setAdding(false); setEditing(null) }}
+          onSaveMeta={onSaveMeta}
+          onStageAdd={onStageAdd}
+          onStageMove={onStageMove}
+          onStageRemove={onStageRemove}
         />
       )}
     </div>

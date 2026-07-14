@@ -26,7 +26,6 @@ export default function LtclNav() {
       <NavLink to="/ltcl/rules" className={navClass}>{t.ltcl_tab_rules}</NavLink>
       <NavLink to="/ltcl/list" className={navClass}>{t.ltcl_tab_list}</NavLink>
       <NavLink to="/ltcl/leaderboard" className={navClass}>{t.ltcl_tab_leaderboard}</NavLink>
-      <NavLink to="/ltcl/roulette" className={navClass}>{t.ltcl_tab_roulette}</NavLink>
       <NavLink to="/ltcl/packs" className={navClass}>{t.ltcl_tab_packs}</NavLink>
       {isStaff && <NavLink to="/ltcl/admin" className={navClass}>{t.ltcl_tab_admin}</NavLink>}
     </>
