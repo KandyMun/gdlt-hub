@@ -18,13 +18,13 @@ const LTCL_DISCORD_URL = 'https://discord.gg/DcyRWRSfDp'
 // `changelog` collection (see the logging helpers in ltclLevels.ts), which the
 // hook below streams in. The staff list is resolved live from user roles.
 
-type ChangeEntry = { id?: string; level: string; text: string }
+type ChangeEntry = { id?: string; level: string; text: string; raw?: boolean }
 type ChangeDay = { date: string; entries: ChangeEntry[] }
 
 // One stored changelog event. `level` is the bolded lead level ('' for list-wide
 // lines like Legacy pushes), `text` the rest of the sentence, `date` the day it
 // happened (YYYY-MM-DD), `ts` a millisecond timestamp used only for ordering.
-type ChangelogDoc = { level: string; text: string; date: string; ts: number }
+type ChangelogDoc = { level: string; text: string; date: string; ts: number; raw?: boolean }
 
 // Stream the changelog newest-first and group it by day for display.
 function useChangelog(): ChangeDay[] {
@@ -45,7 +45,7 @@ function useChangelog(): ChangeDay[] {
         byDate.set(d.date, entries)
         days.push({ date: d.date, entries })
       }
-      entries.push({ id: d.id, level: d.level, text: d.text })
+      entries.push({ id: d.id, level: d.level, text: d.text, raw: d.raw })
     }
     return days
   }, [docs])
@@ -156,6 +156,15 @@ function highlightLine(text: string, levels: Map<string, number>): ReactNode[] {
 }
 
 function renderEntry(e: ChangeEntry, levels: Map<string, number>): ReactNode[] {
+  // Free-form custom entries: only the lead level is highlighted (and linked if
+  // it's on the list); the rest is plain prose. Structured pattern/auto entries
+  // run through the full highlighter that finds placements and level names.
+  if (e.raw) {
+    const nodes: ReactNode[] = []
+    if (e.level) nodes.push(nameNode(e.level, levels, 'raw-lvl'), <span key="raw-sp"> </span>)
+    nodes.push(<span key="raw-txt">{e.text}</span>)
+    return nodes
+  }
   return highlightLine(e.level ? `${e.level} ${e.text}` : e.text, levels)
 }
 

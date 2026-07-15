@@ -46,12 +46,14 @@ function UsernameField({
   users,
   placeholder,
   className,
+  disabled,
 }: {
   value: string
   onChange: (v: string) => void
   users: UserRow[]
   placeholder: string
   className: string
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
@@ -74,26 +76,89 @@ function UsernameField({
         className={className}
         placeholder={placeholder}
         value={value}
+        disabled={disabled}
         onChange={(e) => { onChange(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
       />
-      {open && filtered.length > 0 && (
-        <div className="absolute left-0 right-0 mt-1 z-50 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-          {filtered.map((u) => (
-            <button
-              key={u.id}
-              type="button"
-              // Fires before the input's onBlur closes the dropdown.
-              onMouseDown={(e) => { e.preventDefault(); pick(u) }}
-              className="flex items-center gap-1.5 w-full text-left text-sm px-3 py-1.5 text-neutral-200 hover:bg-neutral-800 truncate"
-            >
-              <span className="truncate">{u.displayName || u.username}</span>
-              <span className="text-neutral-500 text-xs shrink-0">@{u.username}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {open && !disabled && filtered.length > 0 && <UserOptions users={filtered} onPick={pick} />}
+    </div>
+  )
+}
+
+// The shared dropdown of matching site accounts. onPick fires on mousedown so it
+// runs before the input's onBlur closes the list.
+function UserOptions({ users, onPick }: { users: UserRow[]; onPick: (u: UserRow) => void }) {
+  return (
+    <div className="absolute left-0 right-0 mt-1 z-50 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+      {users.map((u) => (
+        <button
+          key={u.id}
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onPick(u) }}
+          className="flex items-center gap-1.5 w-full text-left text-sm px-3 py-1.5 text-neutral-200 hover:bg-neutral-800 truncate"
+        >
+          <span className="truncate">{u.displayName || u.username}</span>
+          <span className="text-neutral-500 text-xs shrink-0">@{u.username}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Creators is a comma-separated list of names. Autocomplete works on the segment
+// after the last comma, so several people can be picked or typed in a row;
+// picking one replaces that trailing segment with the account's username and
+// appends ", " ready for the next. Free text is preserved for people with no
+// site account, exactly like plain typing.
+function CreatorsField({
+  value,
+  onChange,
+  users,
+  placeholder,
+  className,
+  disabled,
+}: {
+  value: string
+  onChange: (v: string) => void
+  users: UserRow[]
+  placeholder: string
+  className: string
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  const filtered = useMemo(() => {
+    const lastSegment = value.slice(value.lastIndexOf(',') + 1).toLowerCase().trim()
+    // Names already entered — don't suggest them again.
+    const chosen = new Set(value.split(',').map((c) => c.trim().toLowerCase()).filter(Boolean))
+    const matches = users.filter((u) => {
+      if (chosen.has(u.username.toLowerCase())) return false
+      if (!lastSegment) return true
+      return u.username.toLowerCase().includes(lastSegment) || (u.displayName ?? '').toLowerCase().includes(lastSegment)
+    })
+    return matches.slice(0, 8)
+  }, [users, value])
+
+  function pick(u: UserRow) {
+    const head = value.slice(0, value.lastIndexOf(',') + 1)
+    const prefix = head ? `${head.replace(/\s*$/, '')} ` : ''
+    onChange(`${prefix}${u.username}, `)
+    setOpen(true) // keep open so the next creator can be added
+  }
+
+  return (
+    <div className="relative min-w-0">
+      <input
+        className={className}
+        placeholder={placeholder}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+      />
+      {open && !disabled && filtered.length > 0 && <UserOptions users={filtered} onPick={pick} />}
     </div>
   )
 }
@@ -302,17 +367,38 @@ export default function LtclLevelEditor({
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelCls}>{t.ltcl_list_publisher}</label>
-              <input className={metaCls} value={publisher} onChange={(e) => setPublisher(e.target.value)} disabled={metaLocked} />
+              <UsernameField
+                className={metaCls}
+                placeholder=""
+                value={publisher}
+                onChange={setPublisher}
+                users={users}
+                disabled={metaLocked}
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelCls}>{t.ltcl_list_verifier}</label>
-              <input className={metaCls} value={verifier} onChange={(e) => setVerifier(e.target.value)} disabled={metaLocked} />
+              <UsernameField
+                className={metaCls}
+                placeholder=""
+                value={verifier}
+                onChange={setVerifier}
+                users={users}
+                disabled={metaLocked}
+              />
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className={labelCls}>{t.ltcl_list_creators} <span className="text-neutral-600 normal-case">({t.ltcl_edit_creators_hint})</span></label>
-            <input className={metaCls} value={creators} onChange={(e) => setCreators(e.target.value)} disabled={metaLocked} />
+            <CreatorsField
+              className={metaCls}
+              placeholder=""
+              value={creators}
+              onChange={setCreators}
+              users={users}
+              disabled={metaLocked}
+            />
           </div>
 
           <div className="flex flex-col gap-1">

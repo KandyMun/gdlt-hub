@@ -6,14 +6,16 @@ import { useIsAdmin } from '../useIsAdmin'
 import { DraftGuardProvider } from './DraftGuard'
 import { useDraftGuard } from './draftGuardContext'
 import LtclAdminLevels from './LtclAdminLevels'
+import LtclAdminChangelog from './LtclAdminChangelog'
 import LtclAdminPacks from './LtclAdminPacks'
 import LtclAdminRules from './LtclAdminRules'
 import LtclAdminMerge from './LtclAdminMerge'
 
-type Tab = 'levels' | 'packs' | 'rules' | 'merge'
+type Tab = 'levels' | 'changelog' | 'packs' | 'rules' | 'merge'
 
 interface Caps {
   canLevels: boolean
+  canChangelog: boolean
   canPacks: boolean
   canRules: boolean
   canMerge: boolean
@@ -22,13 +24,14 @@ interface Caps {
 // The tab bar + panel body. Split out from the page so it sits *inside* the
 // DraftGuardProvider and can route sub-tab switches through the exit guard —
 // switching away from Levels with un-committed changes prompts first.
-function AdminPanel({ canLevels, canPacks, canRules, canMerge }: Caps) {
+function AdminPanel({ canLevels, canChangelog, canPacks, canRules, canMerge }: Caps) {
   const { t } = useI18n()
   const { guard } = useDraftGuard()
   const [tab, setTab] = useState<Tab>(canLevels ? 'levels' : canRules ? 'rules' : 'merge')
 
   const tabs: { id: Tab; label: string }[] = [
     ...(canLevels ? [{ id: 'levels' as Tab, label: t.ltcl_admin_levels }] : []),
+    ...(canChangelog ? [{ id: 'changelog' as Tab, label: t.ltcl_admin_changelog }] : []),
     ...(canPacks ? [{ id: 'packs' as Tab, label: t.ltcl_admin_packs }] : []),
     ...(canRules ? [{ id: 'rules' as Tab, label: t.ltcl_admin_rules }] : []),
     ...(canMerge ? [{ id: 'merge' as Tab, label: t.ltcl_admin_merge }] : []),
@@ -53,6 +56,7 @@ function AdminPanel({ canLevels, canPacks, canRules, canMerge }: Caps) {
         ))}
       </div>
       {tab === 'levels' && canLevels && <LtclAdminLevels />}
+      {tab === 'changelog' && canChangelog && <LtclAdminChangelog />}
       {tab === 'packs' && canPacks && <LtclAdminPacks />}
       {tab === 'rules' && canRules && <LtclAdminRules />}
       {tab === 'merge' && canMerge && <LtclAdminMerge />}
@@ -79,12 +83,21 @@ export default function LtclAdminPage() {
   const canMerge = isAdmin || canManageLevels
   // Packs group levels, so managing them needs the same access as levels.
   const canPacks = isAdmin || canManageLevels
+  // Writing changelog docs requires list-admin (or site admin) per firestore
+  // rules — the same access level as managing levels, not records-only.
+  const canChangelog = isAdmin || canManageLevels
 
   if (!canLevels && !canRules && !canMerge) return <Navigate to="/ltcl" replace />
 
   return (
     <DraftGuardProvider>
-      <AdminPanel canLevels={canLevels} canPacks={canPacks} canRules={canRules} canMerge={canMerge} />
+      <AdminPanel
+        canLevels={canLevels}
+        canChangelog={canChangelog}
+        canPacks={canPacks}
+        canRules={canRules}
+        canMerge={canMerge}
+      />
     </DraftGuardProvider>
   )
 }

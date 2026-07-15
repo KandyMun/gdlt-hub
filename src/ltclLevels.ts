@@ -211,23 +211,32 @@ export function useLtclLevels() {
 // formats them (placements → #N, level names linked). These are pure so the
 // admin panel can stack edits on a draft and only commit the writes at the end.
 
-export type ChangelogEntry = { level: string; text: string }
+// `raw` marks a free-form (custom) entry: the home page renders its text as
+// plain prose and only highlights the lead level, instead of treating every
+// word as a level name (which is right only for the structured pattern lines).
+export type ChangelogEntry = { level: string; text: string; raw?: boolean }
 
 // Local date in Lithuania as YYYY-MM-DD (groups entries by day on the page).
 function changelogDate(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Vilnius' })
 }
 
-// "virš X ir po Y" clause for a level sitting at array index `idx` in an ordered
-// (placement-ascending) list. po = the better-ranked neighbor above it in the
-// list, virš = the worse-ranked neighbor below it. Ends the sentence with a dot.
-function neighborClause(ordered: LtclLevel[], idx: number): string {
-  const po = ordered[idx - 1]?.name // better placement, shown after "po"
-  const virs = ordered[idx + 1]?.name // worse placement, shown after "virš"
-  if (virs && po) return `, virš ${virs} ir po ${po}.`
-  if (virs) return `, virš ${virs}.`
-  if (po) return `, po ${po}.`
+// "virš X ir po Y" clause from the two neighbor names directly. `po` is the
+// better-ranked level above it on the list, `virs` the worse-ranked level below
+// it. Blanks are dropped. Ends the sentence with a dot.
+function neighborClauseNames(po?: string, virs?: string): string {
+  const a = po?.trim()
+  const b = virs?.trim()
+  if (b && a) return `, virš ${b} ir po ${a}.`
+  if (b) return `, virš ${b}.`
+  if (a) return `, po ${a}.`
   return '.'
+}
+
+// Same clause for a level sitting at array index `idx` in an ordered
+// (placement-ascending) list.
+function neighborClause(ordered: LtclLevel[], idx: number): string {
+  return neighborClauseNames(ordered[idx - 1]?.name, ordered[idx + 1]?.name)
 }
 
 // "A, B ir C" — comma list with a final "ir", matching the changelog style.
@@ -248,6 +257,74 @@ function legacyEntry(names: string[]): ChangelogEntry {
 
 function legacyReturnEntry(names: string[]): ChangelogEntry {
   return { level: '', text: `Į sąrašą grįžta ${joinNames(names)}.` }
+}
+
+// ─── Manual changelog builders (pure) ────────────────────────────────────────
+// The same phrasing the automatic planners use, exposed so admins can hand-write
+// a changelog entry from the list admin panel. Each returns a ChangelogEntry
+// that stages and commits exactly like an auto-generated one. `above`/`below`
+// are optional neighbor names (above = the level ranked just better, below =
+// just worse). A blank field is simply omitted from the sentence.
+
+export const MANUAL_PATTERNS = [
+  'custom',
+  'added',
+  'moved',
+  'swapped',
+  'removed',
+  'legacy',
+  'legacyReturn',
+] as const
+export type ManualPattern = (typeof MANUAL_PATTERNS)[number]
+
+// Split a comma-separated names field into a trimmed, non-empty list.
+export function splitNames(input: string): string[] {
+  return input.split(',').map((s) => s.trim()).filter(Boolean)
+}
+
+export function manualAdd(
+  name: string,
+  placement: number,
+  above?: string,
+  below?: string,
+): ChangelogEntry {
+  return { level: name.trim(), text: `įdėtas į ${placement} vietą${neighborClauseNames(above, below)}` }
+}
+
+export function manualMove(
+  name: string,
+  from: number,
+  to: number,
+  above?: string,
+  below?: string,
+): ChangelogEntry {
+  const verb = to < from ? 'pakeltas' : 'nuleistas'
+  return {
+    level: name.trim(),
+    text: `${verb} iš ${from} vietos į ${to} vietą${neighborClauseNames(above, below)}`,
+  }
+}
+
+export function manualSwap(higher: string, lower: string): ChangelogEntry {
+  const h = higher.trim()
+  const l = lower.trim()
+  return { level: '', text: `${h} ir ${l} sukeisti vietomis, ${h} dabar aukščiau.` }
+}
+
+export function manualRemove(name: string): ChangelogEntry {
+  return { level: name.trim(), text: 'pašalintas iš sąrašo.' }
+}
+
+export function manualLegacy(names: string[]): ChangelogEntry {
+  return legacyEntry(names)
+}
+
+export function manualLegacyReturn(names: string[]): ChangelogEntry {
+  return legacyReturnEntry(names)
+}
+
+export function manualCustom(level: string, text: string): ChangelogEntry {
+  return { level: level.trim(), text: text.trim(), raw: true }
 }
 
 // Names of levels shoved from a ranked spot (≤#100) into Legacy (>#100) going
@@ -436,22 +513,35 @@ export async function commitStagedChanges(
   }
   await batch.commit()
 
-  if (entries.length > 0) {
-    try {
-      const clBatch = writeBatch(db)
-      const base = Date.now()
-      const date = changelogDate()
-      entries.forEach((e, i) => {
-        clBatch.set(doc(collection(db, 'changelog')), {
-          level: e.level,
-          text: e.text,
-          date,
-          ts: base + i,
-        })
-      })
-      await clBatch.commit()
-    } catch {
-      // Non-fatal — the list changes already committed.
-    }
+  try {
+    await commitChangelogEntries(entries)
+  } catch {
+    // Non-fatal — the list changes already committed.
   }
+}
+
+// Append a batch of changelog entries to the `changelog` collection. The page
+// shows entries newest-ts first, so within one committed batch the first staged
+// entry must get the highest ts to stay on top — this keeps the committed order
+// identical to the staged preview (and to the seed script's convention). A later
+// commit still sorts above an earlier one, since Date.now() advances between
+// commits by far more than a batch's entry count. Used by the staged list flow
+// and the manual changelog tab. No-op on an empty list.
+export async function commitChangelogEntries(entries: ChangelogEntry[]): Promise<void> {
+  if (entries.length === 0) return
+  const clBatch = writeBatch(db)
+  const base = Date.now()
+  const date = changelogDate()
+  const n = entries.length
+  entries.forEach((e, i) => {
+    clBatch.set(doc(collection(db, 'changelog')), {
+      level: e.level,
+      text: e.text,
+      date,
+      ts: base + (n - 1 - i),
+      // Only stored when true — keeps auto/pattern entries free of the field.
+      ...(e.raw ? { raw: true } : {}),
+    })
+  })
+  await clBatch.commit()
 }

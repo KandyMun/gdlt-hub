@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.6.1.2] - 2026-07-15
+
+### Pridėta
+- Sąrašo administravime naujas „Žurnalas" skirtukas — galima ranka rašyti pakeitimų žurnalo įrašus. Siūlomi tie patys šablonai kaip automatiniuose įrašuose (įdėtas, perkeltas, sukeisti vietomis, pašalintas, išstumtas į legacy ar grįžęs), taip pat laisvo teksto įrašas, kai reikia pasakyti ką nors konkretaus. Įrašai kaupiami ir įrašomi paspaudus „Įrašyti pakeitimus", kaip ir sąrašo pakeitimai.
+- Pridedant lygį, autorius, įkėlėją ir patvirtintoją galima pasirinkti iš gdlt-hub sistemos žmonių sąrašo — pradėjus rašyti pasirodo tinkamos paskyros. Taip pat galima įvesti laisvą tekstą žaidėjams, neturintiems paskyros.
+
 ## [v0.6.1.1] - 2026-07-15
 
 ### Pridėta

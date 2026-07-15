@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.6.1.2] - 2026-07-15
+
+### Added
+- New "Changelog" tab in list administration — write changelog entries by hand. It offers the same patterns the automatic entries use (added, moved, swapped, removed, pushed to / returned from legacy) plus free-form custom text when something specific needs to be said. Entries stack up and are written on "Commit changes", the same as list edits.
+- When adding a level, the creators, uploader and verifier can be picked from the people in the gdlt-hub system — matching accounts appear as you type. Free text still works for players without an account.
+
 ## [v0.6.1.1] - 2026-07-15
 
 ### Added
