@@ -22,6 +22,8 @@ const lt = {
   nav_signout: 'Atsijungti',
   nav_back: 'Atgal',
   nav_about: 'Apie šį puslapį',
+  nav_discord: 'Prisijunk prie Discord',
+  ltcl_discord: 'LTCL Discord',
   nav_search: 'Vartotojų paieška',
   nav_logged_in_as: (u: string) => `Prisijungta kaip: ${u}`,
 

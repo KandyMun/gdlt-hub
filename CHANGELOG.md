@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.6.1.1] - 2026-07-15
+
+### Pridėta
+- GDLT Discord serverio nuoroda antraštėje — matoma visuose puslapiuose, šalia kalbos perjungiklio. Rodoma kaip ryškus mėlynas („blurple") Discord ženkliukas, kad būtų lengvai pastebima.
+- LTCL Discord serverio nuoroda LTCL pagrindiniame puslapyje — mygtukas šalia „Žiūrėti sąrašą" ir „Sąrašo taisyklės".
+
 ## [v0.6.1] - 2026-07-14
 
 ### Pridėta

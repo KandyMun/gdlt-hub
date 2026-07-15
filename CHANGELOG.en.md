@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.6.1.1] - 2026-07-15
+
+### Added
+- GDLT Discord server link in the header — visible on every page, next to the language switch. Shown as a bold blurple Discord icon so it's easy to spot.
+- LTCL Discord server link on the LTCL home page — a button next to "View list" and "List Rules".
+
 ## [v0.6.1] - 2026-07-14
 
 ### Added

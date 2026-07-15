@@ -10,6 +10,8 @@ const en = {
   nav_signout: 'Sign out',
   nav_back: 'Back',
   nav_about: 'About this page',
+  nav_discord: 'Join our Discord',
+  ltcl_discord: 'LTCL Discord',
   nav_search: 'User search',
   nav_logged_in_as: (u: string) => `Logged in as: ${u}`,
 
