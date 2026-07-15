@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { parseChangelog, CHANGELOG_GROUP_COLORS } from '../changelog'
 import rawLt from '../../CHANGELOG.md?raw'
-import rawEn from '../../CHANGELOG.en.md?raw'
 
 const RECENT_COUNT = 3
 const MAX_ITEMS_PER_VERSION = 4
@@ -10,8 +9,8 @@ const MAX_ITEMS_PER_VERSION = 4
 // Compact "recent changes" card for the homepage sidebar — the last few
 // changelog entries, condensed. Links through to the full changelog page.
 export default function HomeChangelog() {
-  const { t, locale } = useI18n()
-  const sections = parseChangelog(locale === 'en' ? rawEn : rawLt).slice(0, RECENT_COUNT)
+  const { t } = useI18n()
+  const sections = parseChangelog(rawLt).slice(0, RECENT_COUNT)
 
   if (sections.length === 0) return null
 

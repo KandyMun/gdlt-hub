@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { collection, query, where, getDocs, onSnapshot, orderBy, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useLtclLevels, deleteChangelogEntry } from '../ltclLevels'
-import { useIsAdmin } from '../useIsAdmin'
+import { useCan } from '../permissions'
 import { useI18n } from '../i18n'
 import crownIcon from '/crown.svg'
 import userGearIcon from '/user-gear.svg'
@@ -227,7 +227,7 @@ function StaffChip({ user, icon }: { user: StaffUser; icon: string }) {
 export default function LtclHome() {
   const { t, locale } = useI18n()
   const staff = useStaff()
-  const isAdmin = useIsAdmin()
+  const canDelete = useCan('manage_levels')
   const { levels } = useLtclLevels()
   const changelog = useChangelog()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -246,7 +246,7 @@ export default function LtclHome() {
     .filter((g) => g.members.length > 0)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="w-full px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Left / main column */}
       <div className="lg:col-span-2 flex flex-col gap-4">
         {/* Welcome */}
@@ -302,7 +302,7 @@ export default function LtclHome() {
                   {day.entries.map((e, i) => (
                     <li key={e.id ?? i} className="group flex items-start gap-2 text-sm text-neutral-400">
                       <span className="flex-1 min-w-0">{renderEntry(e, levelMap)}</span>
-                      {isAdmin && e.id && (
+                      {canDelete && e.id && (
                         confirmDeleteId === e.id ? (
                           <span className="flex items-center gap-1.5 shrink-0 text-xs">
                             <button

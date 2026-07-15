@@ -39,7 +39,7 @@ export default function Layout() {
   const canManageSite = useCan('manage_site')
   const canManageMotd = useCan('manage_motd')
   const { frozen } = useSiteConfig()
-  const { t, locale, setLocale } = useI18n()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -86,20 +86,6 @@ export default function Layout() {
           >
             <DiscordIcon size={22} />
           </a>
-          <div className="flex items-center border border-neutral-700 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setLocale('lt')}
-              className={`px-3 py-1.5 text-sm transition-colors ${locale === 'lt' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
-            >
-              🇱🇹 LT
-            </button>
-            <button
-              onClick={() => setLocale('en')}
-              className={`px-3 py-1.5 text-sm transition-colors ${locale === 'en' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
-            >
-              🇬🇧 EN
-            </button>
-          </div>
           {user && <NotificationsPanel onOpenPost={(post) => setNotifPost(post)} />}
           {user ? (
             <div className="relative">

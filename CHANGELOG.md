@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.1.3] - 2026-07-15
+
+### Pridėta
+- Sąrašo administratoriai dabar gali trinti pakeitimų žurnalo įrašus — anksčiau tai galėjo tik svetainės administratoriai.
+
+### Pakeista
+- LTCL pagrindinis puslapis išsitęsia per visą ekrano plotį (anksčiau turinys buvo apribotas siauresne juosta viduryje).
+- Anglų kalba kol kas nebenaudojama: svetainė skirta lietuvių auditorijai, tad numatytoji ir vienintelė kalba dabar yra lietuvių, o kalbos perjungiklis pašalintas iš antraštės. Vertimų sistema palikta, kad prireikus kalbą būtų galima lengvai grąžinti.
+
+### Pašalinta
+- Angliškas vertimų failas ir angliškas pakeitimų žurnalas.
+
 ## [v0.6.1.2] - 2026-07-15
 
 ### Pridėta

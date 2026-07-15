@@ -2,11 +2,10 @@ import VERSION from '../version'
 import { useI18n } from '../i18n'
 import { parseChangelog, CHANGELOG_GROUP_COLORS as GROUP_COLORS } from '../changelog'
 import rawLt from '../../CHANGELOG.md?raw'
-import rawEn from '../../CHANGELOG.en.md?raw'
 
 export default function ChangelogPage() {
-  const { t, locale } = useI18n()
-  const sections = parseChangelog(locale === 'en' ? rawEn : rawLt)
+  const { t } = useI18n()
+  const sections = parseChangelog(rawLt)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">

@@ -1,6 +1,5 @@
 // Shared changelog markdown parsing — used by the full changelog page and the
-// homepage "recent changes" widget so both read CHANGELOG.md/CHANGELOG.en.md
-// the same way.
+// homepage "recent changes" widget so both read CHANGELOG.md the same way.
 
 export interface ChangelogSection {
   version: string
