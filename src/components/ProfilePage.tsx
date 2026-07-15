@@ -11,7 +11,7 @@ import { getRole } from '../roles'
 import type { CustomLink } from '../socials'
 import ProfilePosts from './ProfilePosts'
 import { SocialLinksRow, SocialLinksEditor } from './SocialLinks'
-import AredlStats from './AredlStats'
+import DemonlistCarousel from './DemonlistCarousel'
 import LtclStats from './LtclStats'
 import GdStats from './GdStats'
 import BadgePill from './BadgePill'
@@ -30,6 +30,7 @@ interface Profile {
   socials?: Record<string, string>
   customLinks?: CustomLink[]
   gdUsername?: string
+  pointercrateUsername?: string
 }
 
 const MAX_ABOUT = 500
@@ -346,7 +347,16 @@ export default function ProfilePage() {
 
       <LtclStats username={profile.username} />
 
-      <AredlStats username={profile.username} discordId={profile.uid} />
+      <DemonlistCarousel
+        username={profile.username}
+        discordId={profile.uid}
+        uid={profile.uid}
+        pointercrateUsername={profile.pointercrateUsername}
+        isOwner={showOwnerControls}
+        onPointercrateSaved={(pointercrateUsername) =>
+          setProfile((p) => (p ? { ...p, pointercrateUsername: pointercrateUsername || undefined } : p))
+        }
+      />
 
       <GdStats
         uid={profile.uid}

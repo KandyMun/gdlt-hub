@@ -96,9 +96,11 @@ function HardestBanner({ hardest }: { hardest: AredlHardest | null }) {
 export default function AredlStats({
   username,
   discordId,
+  onVisibilityChange,
 }: {
   username: string
   discordId?: string
+  onVisibilityChange?: (visible: boolean) => void
 }) {
   const { t } = useI18n()
   const [state, setState] = useState<State>({ kind: 'loading' })
@@ -119,12 +121,17 @@ export default function AredlStats({
 
   // Stay quiet unless there's something to show: no card for users without an
   // AREDL account or on a transient error.
-  if (state.kind === 'none' || state.kind === 'error') return null
+  const visible = state.kind !== 'none' && state.kind !== 'error'
+  useEffect(() => {
+    onVisibilityChange?.(visible)
+  }, [visible, onVisibilityChange])
+
+  if (!visible) return null
 
   const hardestLevelId = state.kind === 'loaded' ? state.stats.hardest?.levelId : undefined
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden mt-4 ${hardestLevelId !== undefined ? '' : 'bg-neutral-900'}`}>
+    <div className={`relative rounded-2xl overflow-hidden ${hardestLevelId !== undefined ? '' : 'bg-neutral-900'}`}>
       {hardestLevelId !== undefined && <HardestBackdrop levelId={hardestLevelId} />}
       <div className="relative p-6 flex flex-col gap-2">
         <div className="flex items-center justify-between">

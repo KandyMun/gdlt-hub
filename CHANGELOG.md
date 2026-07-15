@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.6.2] - 2026-07-15
+
+### Pridėta
+- Nauja Pointercrate (Geometry Dash Demonlist) statistikos kortelė: rodo sąrašo taškus, vietą pasaulyje, sunkiausią įveiktą demoną ir įveiktų lygių skaičių pagal sąrašo dalį (main, extended, legacy). Ji rodoma toje pačioje skiltyje kaip AREDL, jei ji yra. Kadangi Pointercrate naudoja kitą identifikavimo sistemą (ne Discord @), savininkas savo Pointercrate žaidėjo vardą turi įvesti ranka. Kol kas galima įvesti bet kokį žaidėją, tačiau būtų geriau kad vestumėte savo (3 Zoinkų čia nereikia).
+
 ## [v0.6.1.3] - 2026-07-15
 
 ### Pridėta

@@ -543,6 +543,27 @@ const lt = {
   aredl_hardest: 'Sunkiausias demonas',
   aredl_no_records: 'Kol kas nėra įveiktų.',
 
+  // Profile — Pointercrate (Geometry Dash Demonlist) statistika
+  pc_title: 'Pointercrate statistika',
+  pc_view: 'Žiūrėti Pointercrate',
+  pc_points: 'Sąrašo taškai',
+  pc_rank: 'Vieta pasaulyje',
+  pc_hardest: 'Sunkiausias demonas',
+  pc_no_records: 'Kol kas nėra įveiktų.',
+  pc_main: 'Main',
+  pc_extended: 'Extended',
+  pc_legacy: 'Legacy',
+  pc_username_label: 'Pointercrate vardas',
+  pc_username_placeholder: 'Jūsų Pointercrate žaidėjo vardas',
+  pc_username_hint: 'Susiekite savo Pointercrate paskyrą pagal žaidėjo vardą. Įrašykite tiksliai tokį vardą, koks jis sąraše. Palikite tuščią ir išsaugokite, kad atsietumėte.',
+  pc_not_found: (name: string) => `Pointercrate žaidėjas „${name}“ nerastas.`,
+  pc_error: 'Nepavyko užkrauti Pointercrate statistikos. Bandykite vėliau.',
+  pc_error_detail: (msg: string) => `Nepavyko užkrauti Pointercrate statistikos: ${msg}`,
+
+  // Profilio statistikos karuselė
+  carousel_prev: 'Ankstesnis',
+  carousel_next: 'Kitas',
+
   // Profile — Geometry Dash statistika
   gd_title: 'Geometry Dash',
   gd_view: 'Žiūrėti GDBrowser',
