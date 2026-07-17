@@ -44,7 +44,7 @@ export default function MotdSection() {
     if (rolling || motds.length === 0) return
     setRolling(true)
     try {
-      await forceRollMotd(motds)
+      await forceRollMotd()
     } finally {
       setRolling(false)
     }

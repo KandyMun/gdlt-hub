@@ -1,4 +1,5 @@
 import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { defineSecret, defineString } from 'firebase-functions/params'
 import * as logger from 'firebase-functions/logger'
 import * as admin from 'firebase-admin'
@@ -249,4 +250,106 @@ export const mergeAccounts = onCall(async (request): Promise<MergeResult> => {
     notifications,
     rolesAfter,
   }
+})
+
+// ── Message of the day (MOTD) rotation ──────────────────────────────────────
+//
+// The community's calendar day drives which message shows, and the roll must
+// happen at ONE authoritative moment — Vilnius midnight — for everyone. It used
+// to run from visitors' browsers using each device's own clock, so a client
+// with a skewed clock could roll early (and two clients could disagree and
+// ping-pong, burning through the pool). Rolling here on a schedule with the
+// server's trusted clock fixes that; the client only reads config/motd now.
+//
+// The Admin SDK bypasses Firestore rules, so this can delete the consumed
+// message and write the denormalized banner in one transaction regardless of
+// how the rules are locked down.
+
+const MOTD_TZ = 'Europe/Vilnius'
+
+interface MotdConfig {
+  currentId: string | null
+  text: string | null
+  day: string | null
+  selectedAt: number
+}
+
+// The community day ("YYYY-MM-DD") in Vilnius wall-time for a given instant.
+function vilniusDay(at: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: MOTD_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(at)
+}
+
+// Roll the message of the day: delete the one that was showing (so it can never
+// be picked again) and pick a random one of the remaining, stamping today's
+// Vilnius date. Runs in a transaction so a scheduled run and a manual "roll now"
+// can't double-roll. When `force` is false (the daily run) it still rolls — the
+// schedule already guarantees it's a new day — but re-stamps the current day so
+// repeat/retry invocations on the same day are no-ops.
+async function rotateMotd(force: boolean): Promise<void> {
+  const now = new Date()
+  const today = vilniusDay(now)
+  const configRef = db.collection('config').doc('motd')
+
+  await db.runTransaction(async (tx) => {
+    // Reads first (transaction requirement): current config + the whole pool.
+    const cfgSnap = await tx.get(configRef)
+    const poolSnap = await tx.get(db.collection('motd'))
+    const cfg = (cfgSnap.exists ? cfgSnap.data() : {}) as Partial<MotdConfig>
+    const pool = poolSnap.docs.map((d) => ({ id: d.id, text: (d.data().text as string) ?? '' }))
+
+    const currentId = cfg.currentId ?? null
+    // The daily run always advances the day; skip only if we already rolled for
+    // today (idempotent on retries) and this isn't a forced manual roll.
+    if (!force && cfg.day === today) return
+
+    const candidates = pool.filter((m) => m.id !== currentId)
+    if (currentId) tx.delete(db.collection('motd').doc(currentId))
+    const pick = candidates.length
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : null
+    const next: MotdConfig = {
+      currentId: pick?.id ?? null,
+      text: pick?.text ?? null,
+      day: today,
+      selectedAt: now.getTime(),
+    }
+    tx.set(configRef, next)
+  })
+}
+
+/**
+ * Daily authoritative roll at Vilnius midnight. This is the single source of
+ * truth for the day's message — clients never roll anymore.
+ */
+export const rollMotdDaily = onSchedule(
+  { schedule: '0 0 * * *', timeZone: MOTD_TZ },
+  async () => {
+    await rotateMotd(false)
+    logger.info('rollMotdDaily: rolled MOTD')
+  },
+)
+
+/**
+ * Manual "roll now" for the admin panel: consume the current message and pick a
+ * new one immediately. Restricted to the motd-manager role or a site admin.
+ *
+ * Client: httpsCallable(functions, 'rollMotdNow')()
+ */
+export const rollMotdNow = onCall(async (request) => {
+  const caller = request.auth
+  if (!caller) throw new HttpsError('unauthenticated', 'Sign in required.')
+  const callerSnap = await db.collection('users').doc(caller.uid).get()
+  const roles: string[] = callerSnap.data()?.roles ?? []
+  const allowed =
+    caller.uid === SUPER_ADMIN_UID ||
+    roles.includes('administrator') ||
+    roles.includes('motd-manager')
+  if (!allowed) throw new HttpsError('permission-denied', 'MOTD managers only.')
+  await rotateMotd(true)
+  return { ok: true }
 })

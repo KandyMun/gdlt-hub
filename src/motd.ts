@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   collection,
   addDoc,
@@ -7,10 +7,9 @@ import {
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
 } from 'firebase/firestore'
-import { db } from './firebase'
-import { useAuth } from './AuthContext'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from './firebase'
 
 // Message of the day ("dienos žinutė"). The motd-manager role curates a pool of
 // short messages in the admin panel. One message is picked per day and shown in
@@ -20,9 +19,12 @@ import { useAuth } from './AuthContext'
 // scrolls across the screen periodically (see MotdBanner).
 //
 // The current selection is denormalized into config/motd so every visitor —
-// logged in or not — sees the same banner without needing read access to the
-// whole pool logic. Selecting the day's message (pick next + delete old) is
-// driven from any signed-in visitor's client, since deletes require auth.
+// logged in or not — sees the same banner. The roll itself (pick next + delete
+// old) is authoritative and server-side: the `rollMotdDaily` scheduled Cloud
+// Function runs at Vilnius midnight using the server's trusted clock. Clients
+// only READ config/motd — they never roll — so a device with a skewed clock
+// can't trigger an early/duplicate rollover. Manual rolls go through the
+// `rollMotdNow` callable (admin "roll now" button).
 
 export interface Motd {
   id: string
@@ -32,18 +34,6 @@ export interface Motd {
 }
 
 export const MOTD_MAX_LENGTH = 200
-
-// The community's calendar day drives selection, so every visitor agrees on
-// "today" regardless of their own clock or timezone. The message rolls over at
-// Vilnius midnight.
-function todayStr(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Vilnius',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
-}
 
 interface MotdConfig {
   currentId: string | null // id of the message currently showing (deleted on next roll)
@@ -98,102 +88,27 @@ export async function deleteMotd(id: string): Promise<void> {
 
 // ---- Banner: selection + display ------------------------------------------
 
-// Select the day's message: delete the one that was showing (so it can never be
-// picked again) and pick a random one of the remaining, stamping today's date.
-// Guarded by a transaction on config/motd so concurrent viewers can't
-// double-roll — the transaction re-decides whether a roll is actually due, so
-// it's safe to call speculatively. Pass force=true for an immediate manual roll
-// regardless of the day.
-async function rotate(pool: Motd[], force = false): Promise<void> {
-  const today = todayStr()
-  const now = Date.now()
-  await runTransaction(db, async (tx) => {
-    const snap = await tx.get(configRef())
-    const cfg = snap.exists() ? (snap.data() as Partial<MotdConfig>) : {}
-    const currentId = cfg.currentId ?? null
-    const candidates = pool.filter((m) => m.id !== currentId)
-    const sameDay = cfg.day === today
-    const hasCurrent = !!cfg.text
-    // Whether the message currently on screen still exists in the pool.
-    const currentGone = !!currentId && !pool.some((m) => m.id === currentId)
-    // Roll when: forced, a new day, nothing is showing yet but messages exist,
-    // or the shown message was deleted out from under us.
-    const shouldRoll =
-      force || !sameDay || currentGone || (!hasCurrent && candidates.length > 0)
-    if (!shouldRoll) return
-    if (currentId) tx.delete(doc(db, 'motd', currentId))
-    const pick = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null
-    const next: MotdConfig = {
-      currentId: pick?.id ?? null,
-      text: pick?.text ?? null,
-      day: today,
-      selectedAt: now,
-    }
-    tx.set(configRef(), next)
-  })
-}
-
 // Force an immediate roll: consume the current message and pick a new one right
 // away. It then stays until the next day. Used by the admin "roll now" button.
-export async function forceRollMotd(pool: Motd[]): Promise<void> {
-  await rotate(pool, true)
+// The roll runs server-side (the `rollMotdNow` Cloud Function) so it uses the
+// server's clock and is gated to MOTD managers.
+const rollMotdNowFn = httpsCallable<void, { ok: boolean }>(functions, 'rollMotdNow')
+export async function forceRollMotd(): Promise<void> {
+  await rollMotdNowFn()
 }
 
 // The banner's view of the world: the current message text (or null when there
 // is nothing to show) and `selectedAt`, a stable id for the current selection.
-// Also drives the once-a-day roll from signed-in clients (deletes need auth).
+// Read-only — the daily roll is done by the server (see rollMotdDaily), so this
+// hook just mirrors config/motd for every visitor, logged in or not.
 export function useMotdBanner(): { text: string | null; selectedAt: number } {
-  const { user } = useAuth()
   const [cfg, setCfg] = useState<MotdConfig | null>(null)
-  const [cfgLoaded, setCfgLoaded] = useState(false)
-  const cfgRef = useRef<MotdConfig | null>(null)
-  const poolRef = useRef<Motd[]>([])
-  const [poolCount, setPoolCount] = useState(0)
-  const rollingRef = useRef(false)
 
-  // Current selection — read by everyone, incl. logged-out visitors.
   useEffect(() => {
     return onSnapshot(configRef(), (snap) => {
-      const c = snap.exists() ? (snap.data() as MotdConfig) : null
-      cfgRef.current = c
-      setCfg(c)
-      setCfgLoaded(true)
+      setCfg(snap.exists() ? (snap.data() as MotdConfig) : null)
     })
   }, [])
-
-  // The pool — needed to pick the day's message and to know when it's empty.
-  useEffect(() => {
-    return onSnapshot(collection(db, 'motd'), (snap) => {
-      poolRef.current = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Motd)
-      setPoolCount(poolRef.current.length)
-    })
-  }, [])
-
-  // Roll the day's message when needed. Only signed-in clients can (deletes need
-  // auth). We check on mount, whenever the config/pool change, and once a minute
-  // so a tab left open overnight rolls over shortly after midnight.
-  useEffect(() => {
-    if (!user || !cfgLoaded) return
-    const check = () => {
-      if (rollingRef.current) return
-      const c = cfgRef.current
-      const pool = poolRef.current
-      const today = todayStr()
-      const currentInPool = !!c?.currentId && pool.some((m) => m.id === c.currentId)
-      const needRoll =
-        (c?.day !== today && (pool.length > 0 || !!c?.text)) || // a new day
-        (!c?.text && pool.length > 0) || // nothing showing but messages exist
-        (!!c?.currentId && !currentInPool) // shown message was deleted
-      if (!needRoll) return
-      rollingRef.current = true
-      rotate(pool).finally(() => {
-        rollingRef.current = false
-      })
-    }
-    check()
-    const id = window.setInterval(check, 60_000)
-    return () => clearInterval(id)
-  }, [user, cfgLoaded, cfg, poolCount])
 
   return { text: cfg?.text ?? null, selectedAt: cfg?.selectedAt ?? 0 }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.6.2.4] - 2026-07-15
+
+### Pakeista
+- MOTD žinutės dabar tikrinamos backend serveriuose ir pagal laiko zoną, o ne pagal naudotojo sistemos laiką.
+
 ## [v0.6.2.3] - 2026-07-15
 
 ### Pataisyta

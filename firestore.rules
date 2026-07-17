@@ -48,20 +48,19 @@ service cloud.firestore {
     match /config/{doc} {
       allow read: if true;
       // Rules text is editable by list staff; other config stays admin-only.
-      // config/motd holds the currently-selected message-of-the-day; any
-      // signed-in visitor's client may advance the rotation (pick the next
-      // message + record when to rotate again), so it's writable by anyone
-      // logged in. It only ever stores a denormalized banner string.
+      // config/motd (the denormalized message-of-the-day banner) is written
+      // ONLY by the server — the rollMotdDaily/rollMotdNow Cloud Functions run
+      // with Admin SDK privileges and bypass these rules — so no client write
+      // path is needed here anymore.
       allow write: if isAdmin()
-                   || (doc == 'ltclRules' && hasRole('list-admin'))
-                   || (doc == 'motd' && isSignedIn());
+                   || (doc == 'ltclRules' && hasRole('list-admin'));
     }
 
     // Message of the day. The motd-manager role (or admin) curates the pool of
-    // messages. Anyone can read them. Deletion is open to any signed-in user
-    // because the banner rotation consumes a message when it moves on to the
-    // next one (so a shown message never gets picked again) — that consumption
-    // runs from ordinary visitors' clients, not just the manager's.
+    // messages. Anyone can read them. The daily rotation consumes a message
+    // (deletes the one that was shown) but that now runs server-side via the
+    // Admin SDK, which bypasses these rules — so client deletes only need to
+    // cover manual curation by managers.
     function isMotdManager() { return isAdmin() || hasRole('motd-manager'); }
 
     match /motd/{id} {
@@ -70,7 +69,7 @@ service cloud.firestore {
                             && request.resource.data.text is string
                             && request.resource.data.text.size() > 0
                             && request.resource.data.text.size() <= 200;
-      allow delete: if isSignedIn();
+      allow delete: if isMotdManager();
     }
 
     // Hub content pages curated by admins only (super-admin + administrator):
