@@ -16,7 +16,23 @@ import DemonHistoryPanel from './DemonHistoryPanel'
 import Spinner from './Spinner'
 
 // How many cards (lists + the hardest-demon timeline) fit on one carousel page.
-const CARDS_PER_PAGE = 3
+// Responsive so cards don't get smushed on narrow screens: one per page on
+// phones, two on small tablets, three on desktop.
+function cardsPerPageFor(width: number) {
+  return width >= 1024 ? 3 : width >= 640 ? 2 : 1
+}
+
+function useCardsPerPage() {
+  const [n, setN] = useState(() =>
+    typeof window === 'undefined' ? 3 : cardsPerPageFor(window.innerWidth),
+  )
+  useEffect(() => {
+    const onResize = () => setN(cardsPerPageFor(window.innerWidth))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return n
+}
 
 // A card in the carousel: either a "top 10" list or the hardest-demon timeline.
 type Card = { key: string; kind: 'list'; list: AchievementList } | { key: string; kind: 'demon' }
@@ -40,6 +56,7 @@ export default function AchievementsPage() {
   const { items, loaded: itemsLoaded } = useAchievements()
   const { users } = useRegisteredUsers()
   const [editMode, setEditMode] = useState(false)
+  const cardsPerPage = useCardsPerPage()
 
   const editing = canEdit && editMode
 
@@ -52,8 +69,8 @@ export default function AchievementsPage() {
   // timeline is always its own final 'history' page.
   const listCards: Card[] = lists.map((l) => ({ key: l.id, kind: 'list' as const, list: l }))
   const pages: Page[] = []
-  for (let i = 0; i < listCards.length; i += CARDS_PER_PAGE) {
-    pages.push({ category: 'achievements', cards: listCards.slice(i, i + CARDS_PER_PAGE) })
+  for (let i = 0; i < listCards.length; i += cardsPerPage) {
+    pages.push({ category: 'achievements', cards: listCards.slice(i, i + cardsPerPage) })
   }
   if (pages.length === 0) pages.push({ category: 'achievements', cards: [] })
   pages.push({ category: 'history', cards: [{ key: '__demon__', kind: 'demon' }] })
@@ -86,18 +103,20 @@ export default function AchievementsPage() {
 
   return (
     <div className="px-4 sm:px-6 py-10">
-      <div className="relative mb-6 min-h-[3.25rem]">
+      <div className="mb-6">
         {canEdit && (
-          <button
-            onClick={() => setEditMode((v) => !v)}
-            className={`absolute right-0 top-0 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
-              editMode ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
-            }`}
-          >
-            {editMode ? t.hub_done : `✎ ${t.hub_edit}`}
-          </button>
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                editMode ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
+              }`}
+            >
+              {editMode ? t.hub_done : `✎ ${t.hub_edit}`}
+            </button>
+          </div>
         )}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 max-w-3xl mx-auto px-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 max-w-3xl mx-auto px-2">
           <div className="justify-self-end">
             {prevLabel && (
               <button

@@ -1,6 +1,19 @@
 # Changelog
 
-## [v0.6.2.4] - 2026-07-15
+## [v0.7] - 2026-07-19
+
+### Pridėta
+- Grafinė sąsaja kiek įmanoma geriau pritaikyta naudojimuisi telefonų ekranais, dalis elementų iškeldinti kitur kad nesimaišytų arba trukdytų naudotis sistema.
+- LTCL profilių foną galima keisti ir iš pagrindinio profilio.
+
+### Pataisyta
+- MOTD pilnai serverio pusėje, dabar nebeturėtų keistis vidury dienos jei kieno nors sistemos laikas yra ne Lietuvos laiku.
+
+### Pakeista
+- Pranešimai perkelti į meniu, kuris yra paspaudus ant profilio nuotraukos.
+- LTCL statistikos lentelė dabar perima ne sunkiausio pereito išbandymo, o LTCL profilio pasirinktą nuotrauką.
+
+## [v0.6.2.4] - 2026-07-17
 
 ### Pakeista
 - MOTD žinutės dabar tikrinamos backend serveriuose ir pagal laiko zoną, o ne pagal naudotojo sistemos laiką.

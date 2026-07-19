@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { useLtclLevels, averageEnjoyment, LEGACY_AFTER, type LtclLevel, type LtclRecord } from '../ltclLevels'
@@ -194,6 +194,33 @@ export default function LtclList() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
 
+  // Mobile carousel: the three panels (list / level / records) sit side by side
+  // in a horizontal snap-scroller and are swiped between. `page` tracks which
+  // panel is in view (for the tab bar); on lg+ the scroller becomes a static
+  // 3-column grid and none of this applies.
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [page, setPage] = useState(0)
+
+  // Page starts are stride apart (panel width + gap); measuring from the DOM
+  // keeps this correct regardless of padding/gap.
+  const stride = () => {
+    const el = scrollerRef.current
+    if (!el || el.children.length < 2) return 0
+    return (el.children[1] as HTMLElement).offsetLeft - (el.children[0] as HTMLElement).offsetLeft
+  }
+
+  const updatePage = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el || el.children.length < 2) return
+    const s = (el.children[1] as HTMLElement).offsetLeft - (el.children[0] as HTMLElement).offsetLeft
+    if (s > 0) setPage(Math.round(el.scrollLeft / s))
+  }, [])
+
+  const goToPage = (i: number) => {
+    const el = scrollerRef.current
+    if (el) el.scrollTo({ left: i * stride(), behavior: 'smooth' })
+  }
+
   // Select a level from the ?level= param (e.g. linked from the leaderboard).
   const paramLevel = searchParams.get('level')
   useEffect(() => {
@@ -208,6 +235,9 @@ export default function LtclList() {
   function selectLevel(id: number) {
     setSelectedId(id)
     setSearchParams({ level: String(id) }, { replace: true })
+    // On mobile, tapping a level slides over to its info panel. No-op on lg+
+    // where the scroller is a static grid.
+    goToPage(1)
   }
 
   // Ranks always reflect list placement; the sort only changes display order.
@@ -241,9 +271,33 @@ export default function LtclList() {
   return (
     <div className="relative">
       {current && <LevelBackdrop src={current.thumbnail || levelThumbnailUrl(current.levelId)} />}
-      <div className="relative z-10 p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] gap-4">
+
+      {/* Mobile-only tab bar, pinned to the bottom of the screen: jumps the
+          carousel to a panel and shows which one is in view. Hidden on lg+ where
+          all three panels are visible at once. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pointer-events-none">
+        <div className="pointer-events-auto max-w-md mx-auto grid grid-cols-3 gap-1 rounded-xl bg-neutral-900/80 backdrop-blur border border-neutral-800/60 p-1 text-xs font-medium shadow-2xl">
+          {[t.ltcl_tab_list, t.ltcl_list_tab_level, t.ltcl_list_records].map((label, i) => (
+            <button
+              key={i}
+              onClick={() => goToPage(i)}
+              className={`px-2 py-1.5 rounded-lg transition-colors ${
+                page === i ? 'bg-violet-600 text-white' : 'text-neutral-400 hover:bg-neutral-800'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div
+        ref={scrollerRef}
+        onScroll={updatePage}
+        className="relative z-10 p-4 pb-24 flex items-start gap-4 snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] lg:items-stretch lg:overflow-visible lg:pb-4"
+      >
       {/* Left: ranked list */}
-      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-3 flex flex-col gap-2">
+      <div className="snap-start shrink-0 w-full lg:w-auto rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-3 flex flex-col gap-2">
         <input
           type="text"
           placeholder={t.ltcl_list_search}
@@ -312,7 +366,7 @@ export default function LtclList() {
       </div>
 
       {/* Center: selected level details */}
-      <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-6">
+      <div className="snap-start shrink-0 w-full lg:w-auto rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-4 sm:p-6">
         {current ? (
           <LevelDetails level={current} rank={currentRank} />
         ) : (
@@ -321,7 +375,7 @@ export default function LtclList() {
       </div>
 
       {/* Right: records */}
-      <aside className="rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-4">
+      <aside className="snap-start shrink-0 w-full lg:w-auto rounded-2xl border border-neutral-800/60 bg-neutral-900/30 backdrop-blur-[7px] p-4">
         <h2 className="text-lg font-bold text-white mb-3">{t.ltcl_list_records}</h2>
         {current && current.records.length > 0 ? (
           <div className="flex flex-col gap-2">

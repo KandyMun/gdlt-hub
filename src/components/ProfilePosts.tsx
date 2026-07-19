@@ -43,7 +43,7 @@ export default function ProfilePosts({ uid }: { uid: string }) {
       ) : posts.length === 0 ? (
         <p className="text-neutral-600 text-sm px-1">{t.profile_posts_empty}</p>
       ) : (
-        <div className="flex flex-col gap-4 w-[70%] mx-auto">
+        <div className="flex flex-col gap-4 w-full sm:w-[70%] mx-auto">
           {posts.map((post) => {
             return (
               <div

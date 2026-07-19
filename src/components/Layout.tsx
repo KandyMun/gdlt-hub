@@ -6,6 +6,7 @@ import { useAuth } from '../AuthContext'
 import { useIsAdmin } from '../useIsAdmin'
 import { useCan } from '../permissions'
 import { useSiteConfig } from '../useSiteConfig'
+import { useNotifications } from '../useNotifications'
 import { useI18n } from '../i18n'
 import { usePageTitle } from '../usePageTitle'
 import { type Post } from '../types'
@@ -40,11 +41,13 @@ export default function Layout() {
   const canManageSite = useCan('manage_site')
   const canManageMotd = useCan('manage_motd')
   const { frozen } = useSiteConfig()
+  const { notifs, setNotifs, unread } = useNotifications()
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   usePageTitle()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [navMenuOpen, setNavMenuOpen] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [notifPost, setNotifPost] = useState<Post | null>(null)
 
@@ -66,18 +69,43 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <header className="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate('/')} className="text-white font-bold text-2xl tracking-tight cursor-pointer">
+      <header className="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+        <button onClick={() => navigate('/')} className="min-w-0 shrink text-white font-bold text-xl sm:text-2xl tracking-tight cursor-pointer truncate">
           <span className="flag-text">GDLT</span> Hub
-          {pageLabel && <span className="text-neutral-400 text-lg"> : {pageLabel}</span>}
-          <span className="text-neutral-600 text-xs font-normal"> {VERSION}</span>
+          {pageLabel && <span className="text-neutral-400 text-base sm:text-lg"> : {pageLabel}</span>}
+          <span className="hidden sm:inline text-neutral-600 text-xs font-normal"> {VERSION}</span>
         </button>
 
-        <div className="flex items-center gap-3 absolute left-1/2 -translate-x-1/2">
+        <div className="hidden md:flex items-center gap-3 absolute left-1/2 -translate-x-1/2">
           {middle}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {middle && (
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setNavMenuOpen((o) => !o)}
+                aria-label="Menu"
+                aria-expanded={navMenuOpen}
+                className="flex items-center justify-center rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-800 p-2 transition-colors"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {navMenuOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
+                </svg>
+              </button>
+              {navMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNavMenuOpen(false)} />
+                  <div
+                    className="absolute right-0 mt-2 min-w-[11rem] bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl p-2 z-50 flex flex-col gap-1"
+                    onClick={() => setNavMenuOpen(false)}
+                  >
+                    {middle}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <a
             href={GDLT_DISCORD_URL}
             target="_blank"
@@ -88,15 +116,19 @@ export default function Layout() {
           >
             <DiscordIcon size={22} />
           </a>
-          {user && <NotificationsPanel onOpenPost={(post) => setNotifPost(post)} />}
           {user ? (
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((o) => !o)}
-                className="flex rounded-full ring-2 ring-transparent hover:ring-neutral-600 transition"
+                className="relative flex rounded-full ring-2 ring-transparent hover:ring-neutral-600 transition"
                 title={currentDisplayName}
               >
                 <Avatar username={currentUsername} size={34} />
+                {unread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-1 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-neutral-950">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
               </button>
               {menuOpen && (
                 <>
@@ -117,6 +149,12 @@ export default function Layout() {
                     >
                       {t.nav_profile}
                     </button>
+                    <NotificationsPanel
+                      notifs={notifs}
+                      setNotifs={setNotifs}
+                      onOpenPost={(post) => { setMenuOpen(false); setNotifPost(post) }}
+                      onActivate={() => setMenuOpen(false)}
+                    />
                     <button
                       onClick={() => { setMenuOpen(false); navigate('/freepost/myposts') }}
                       className="w-full text-left px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"

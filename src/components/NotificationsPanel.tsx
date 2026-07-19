@@ -1,43 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { type Post } from '../types'
-
-interface Notification {
-  id: string
-  type?: 'comment' | 'mention'
-  postId: string
-  postTitle: string
-  commenterUsername: string
-  commentPreview: string
-  createdAt: number
-  read: boolean
-}
+import { type Notification } from '../useNotifications'
 
 interface Props {
+  notifs: Notification[]
+  setNotifs: Dispatch<SetStateAction<Notification[]>>
   onOpenPost: (post: Post) => void
+  // Called when a notification is opened, so the surrounding avatar menu closes.
+  onActivate?: () => void
 }
 
-export default function NotificationsPanel({ onOpenPost }: Props) {
-  const { user } = useAuth()
+// Renders as a row inside the profile dropdown. The button toggles a popover
+// listing the user's notifications; the live data comes from the parent via
+// props (see useNotifications).
+export default function NotificationsPanel({ notifs, setNotifs, onOpenPost, onActivate }: Props) {
   const { t } = useI18n()
-  const [notifs, setNotifs] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!user) return
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-    )
-    return onSnapshot(q, (snap) => {
-      setNotifs(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification)))
-    })
-  }, [user])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -61,26 +43,25 @@ export default function NotificationsPanel({ onOpenPost }: Props) {
       onOpenPost({ id: snap.id, ...snap.data() } as Post)
     }
     setOpen(false)
+    onActivate?.()
   }
-
-  if (!user) return null
 
   return (
     <div ref={panelRef} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`relative text-sm transition-colors ${open ? 'text-white' : 'text-neutral-400 hover:text-white'}`}
+        className="w-full flex items-center justify-between px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"
       >
-        {t.notif_button}
+        <span>{t.notif_button}</span>
         {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 bg-violet-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+          <span className="bg-violet-600 text-white text-[10px] font-bold min-w-[1rem] h-4 px-1 rounded-full flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-8 w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-72 sm:w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
             <span className="text-white font-semibold text-sm">{t.notif_panel_title}</span>
             <div className="flex items-center gap-3">

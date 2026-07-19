@@ -124,6 +124,7 @@ const lt = {
   ltcl_list_avg_enjoyment: 'Vidutinis enjoyment',
   ltcl_list_song: 'Dainos ID',
   ltcl_list_records: 'Rekordai',
+  ltcl_list_tab_level: 'Lygis',
   ltcl_list_no_records: 'Nėra rekordų',
   ltcl_list_empty: 'Kol kas nėra lygių.',
   ltcl_list_legacy: 'Legacy',
@@ -501,7 +502,7 @@ const lt = {
   users_badge_upload_failed: 'Įkėlimas nepavyko.',
 
   // Notifications
-  notif_button: '🔔 Pranešimai',
+  notif_button: 'Pranešimai',
   notif_panel_title: 'Pranešimai',
   notif_mark_read: 'Pažymėti visus skaitytais',
   notif_clear: 'Išvalyti viską',
